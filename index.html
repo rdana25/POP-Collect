@@ -7,23 +7,21 @@
     <title>Card Margin Monitor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar">
         <a class="brand" href="#dashboard" aria-label="Card Margin Monitor home">
-          <span class="brand-mark"><i></i><i></i><i></i></span>
-          <span>Margin<br /><em>Monitor</em></span>
+          <span>Card<span class="brand-slash">/</span>Margin</span>
         </a>
         <p class="store-switcher">COLLECTOR'S VAULT <span>⌄</span></p>
         <nav aria-label="Primary navigation">
-          <a class="nav-link active" href="#dashboard"><span>▦</span> Overview</a>
-          <a class="nav-link" href="#cards"><span>◫</span> Tracked cards <b>184</b></a>
-          <a class="nav-link" href="#alerts"><span>◉</span> Price alerts <b class="alert-badge">12</b></a>
-          <a class="nav-link" href="#history"><span>⌁</span> Price history</a>
-          <a class="nav-link" href="#settings"><span>⚙</span> Settings</a>
+          <a class="nav-link active" href="#dashboard">Home</a>
+          <a class="nav-link" href="#cards">Inventory <b>184</b></a>
+          <a class="nav-link" href="#alerts">Alerts <b class="alert-badge">12</b></a>
+          <a class="nav-link" href="#history">Market</a>
         </nav>
         <div class="plan-card">
           <span class="plan-dot"></span>
@@ -37,9 +35,11 @@
 
       <main id="dashboard">
         <header>
-          <div><p class="date">TUESDAY, SEPTEMBER 8</p><h1>Good morning, Riccardo.</h1><p class="subtitle">Here is where your card prices need attention.</p></div>
+          <div><p class="date">CARD MARKET INTELLIGENCE · LIVE</p><h1>Your card market<br /><span>command center.</span></h1><p class="subtitle">Track sold-market values, protect every margin, and know exactly what needs a move.</p></div>
           <div class="header-actions"><span class="sync-status"><i></i> Last synced 8:12 AM</span><button class="refresh" id="refreshPrices">↻ <span>Refresh prices</span></button></div>
         </header>
+
+        <div class="ticker" aria-label="Live market ticker"><span>CHARIZARD ex #199 <b>$462.00</b> <i>+8.1%</i></span><span>LUGIA V #186 <b>$315.50</b> <i>+4.2%</i></span><span>UMBREON VMAX #215 <b>$716.00</b> <em>-2.6%</em></span><span>MEW ex #193 <b>$386.00</b> <i>+1.4%</i></span></div>
 
         <section class="market-strip" aria-label="Market summary">
           <div><span>Portfolio market value</span><strong>$48,260.50</strong><small class="positive">↑ 3.4% <em>over 7 days</em></small></div>
