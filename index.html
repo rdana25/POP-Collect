@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#081525" />
+    <title>Card Margin Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#dashboard" aria-label="Card Margin Monitor home">
+          <span class="brand-mark"><i></i><i></i><i></i></span>
+          <span>Margin<br /><em>Monitor</em></span>
+        </a>
+        <p class="store-switcher">COLLECTOR'S VAULT <span>⌄</span></p>
+        <nav aria-label="Primary navigation">
+          <a class="nav-link active" href="#dashboard"><span>▦</span> Overview</a>
+          <a class="nav-link" href="#cards"><span>◫</span> Tracked cards <b>184</b></a>
+          <a class="nav-link" href="#alerts"><span>◉</span> Price alerts <b class="alert-badge">12</b></a>
+          <a class="nav-link" href="#history"><span>⌁</span> Price history</a>
+          <a class="nav-link" href="#settings"><span>⚙</span> Settings</a>
+        </nav>
+        <div class="plan-card">
+          <span class="plan-dot"></span>
+          <p>Pro plan</p>
+          <strong>184 <small>/ 800 cards</small></strong>
+          <div class="usage"><i></i></div>
+          <button type="button" id="managePlan">Manage plan</button>
+        </div>
+        <div class="account"><span class="avatar">RD</span><span><strong>Riccardo D.</strong><small>Store owner</small></span><button aria-label="Account menu">•••</button></div>
+      </aside>
+
+      <main id="dashboard">
+        <header>
+          <div><p class="date">TUESDAY, SEPTEMBER 8</p><h1>Good morning, Riccardo.</h1><p class="subtitle">Here is where your card prices need attention.</p></div>
+          <div class="header-actions"><span class="sync-status"><i></i> Last synced 8:12 AM</span><button class="refresh" id="refreshPrices">↻ <span>Refresh prices</span></button></div>
+        </header>
+
+        <section class="market-strip" aria-label="Market summary">
+          <div><span>Portfolio market value</span><strong>$48,260.50</strong><small class="positive">↑ 3.4% <em>over 7 days</em></small></div>
+          <div><span>Estimated inventory cost</span><strong>$36,184.80</strong><small>Across 184 tracked cards</small></div>
+          <div><span>Unrealized margin</span><strong>24.99%</strong><small class="positive">↑ 1.8 pts <em>since last week</em></small></div>
+          <div class="sync-tile"><span>Next scan</span><strong>8:00 PM</strong><small>Pro plan · twice daily</small></div>
+        </section>
+
+        <section class="focus-head"><div><p class="eyebrow">Needs review</p><h2>Market movements</h2></div><button class="text-button" id="viewAll">View all alerts <span>→</span></button></section>
+        <section class="alert-grid" id="alerts">
+          <article class="alert-card increase"><div class="alert-icon">↗</div><div class="alert-title"><p>PRICE INCREASE OPPORTUNITY</p><span>7 cards</span></div><h3>Capture an estimated <strong>$1,246</strong> in upside</h3><p>Recent eBay sales have moved above your current retail prices.</p><button type="button" data-filter="increase">Review opportunities <span>→</span></button></article>
+          <article class="alert-card warning"><div class="alert-icon">!</div><div class="alert-title"><p>MARGIN LOSS WARNING</p><span>5 cards</span></div><h3><strong>$582</strong> of inventory at or below cost</h3><p>These cards need a pricing or holding decision before the next scan.</p><button type="button" data-filter="warning">Review warnings <span>→</span></button></article>
+        </section>
+
+        <section class="table-section" id="cards">
+          <div class="table-head"><div><p class="eyebrow">Latest signals</p><h2>Cards to action</h2></div><div class="filters"><button class="filter active" data-filter="all">All <b>12</b></button><button class="filter" data-filter="increase">Price increases <b>7</b></button><button class="filter" data-filter="warning">Margin warnings <b>5</b></button></div></div>
+          <div class="data-wrap"><table><thead><tr><th>Card</th><th>eBay median <small>Last 5 sales</small></th><th>Your retail / cost</th><th>Market signal</th><th><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody id="cardRows">
+              <tr data-kind="increase"><td><div class="card-name"><div class="card-art pikachu">⚡</div><div><strong>Charizard ex #199</strong><small>Obsidian Flames · PSA 10</small></div></div></td><td><strong>$462.00</strong><small>5 sales · Sep 6</small></td><td><strong>$389.00</strong><small>Cost $210.00</small></td><td><span class="signal up">↑ $73.00 <small>18.8% above retail</small></span></td><td><button class="row-action" data-name="Charizard ex #199">Review</button></td></tr>
+              <tr data-kind="increase"><td><div class="card-name"><div class="card-art lugia">◈</div><div><strong>Lugia V #186</strong><small>Silver Tempest · PSA 10</small></div></div></td><td><strong>$315.50</strong><small>4 sales · Sep 7</small></td><td><strong>$270.00</strong><small>Cost $164.00</small></td><td><span class="signal up">↑ $45.50 <small>16.9% above retail</small></span></td><td><button class="row-action" data-name="Lugia V #186">Review</button></td></tr>
+              <tr data-kind="warning"><td><div class="card-name"><div class="card-art moon">☾</div><div><strong>Umbreon VMAX #215</strong><small>Evolving Skies · BGS 9.5</small></div></div></td><td><strong>$716.00</strong><small>5 sales · Sep 7</small></td><td><strong>$799.00</strong><small>Cost $735.00</small></td><td><span class="signal down">↓ $19.00 <small>2.6% below cost</small></span></td><td><button class="row-action" data-name="Umbreon VMAX #215">Review</button></td></tr>
+              <tr data-kind="warning"><td><div class="card-name"><div class="card-art mew">✦</div><div><strong>Mew ex #193</strong><small>151 · PSA 10</small></div></div></td><td><strong>$386.00</strong><small>3 sales · Sep 6</small></td><td><strong>$410.00</strong><small>Cost $392.00</small></td><td><span class="signal down">↓ $6.00 <small>1.5% below cost</small></span></td><td><button class="row-action" data-name="Mew ex #193">Review</button></td></tr>
+            </tbody></table></div>
+        </section>
+      </main>
+    </div>
+    <div class="toast" role="status" aria-live="polite" id="toast"></div>
+    <dialog id="reviewDialog"><button class="close-dialog" aria-label="Close">×</button><p class="eyebrow">Card review</p><h2 id="dialogTitle">Card</h2><p>This prototype is ready to connect each action to Shopify pricing and your alert workflow.</p><button class="refresh close-primary">Close</button></dialog>
+    <script src="./app.js"></script>
+  </body>
+</html>
