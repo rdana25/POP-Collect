@@ -37,19 +37,22 @@ const STATUS_META = {
   stable: { label: 'Stable', flagLabel: 'Stable', flagClass: 'stable', deltaClass: 'neutral', pillClass: 'status-neutral', icon: ICONS.flat },
 };
 
+// median: the outlier-mitigated figure (median of the last 3-5 sales) that drives
+// status/alerts, per the spec. lastSoldPrice: the single most recent sale — shown
+// alongside median so it's clear why the smoothed figure can differ from it.
 const CARDS = [
-  { id: 'chzx-199', name: 'Charizard ex #199', set: 'Obsidian Flames · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'CHZX-199-P10', mono: 'CE', qty: 1, cost: 210, retail: 389, median: 462, sales: 5, lastSold: 'Sep 6', history: [268, 301, 329, 352, 398, 431, 462] },
-  { id: 'umbv-215', name: 'Umbreon VMAX Alt Art #215', set: 'Evolving Skies · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'UMBV-215-P9', mono: 'UV', qty: 1, cost: 735, retail: 799, median: 690, sales: 4, lastSold: 'Sep 7', history: [810, 795, 772, 748, 726, 705, 690] },
-  { id: 'lugv-186', name: 'Lugia V Alt Art #186', set: 'Silver Tempest · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'LUGV-186-P10', mono: 'LV', qty: 2, cost: 164, retail: 270, median: 315.5, sales: 4, lastSold: 'Sep 7', history: [196, 214, 238, 256, 281, 299, 315.5] },
-  { id: 'wemb-299', name: 'Victor Wembanyama RC #299', set: '2023 Prizm · Basketball', category: 'basketball', grade: 'PSA 10', sku: 'WEMB-299-P10', mono: 'VW', qty: 1, cost: 640, retail: 900, median: 1240, sales: 5, lastSold: 'Sep 8', history: [720, 810, 905, 1010, 1120, 1185, 1240] },
-  { id: 'ohtn-001', name: 'Shohei Ohtani RC', set: '2018 Bowman Chrome · Baseball', category: 'baseball', grade: 'BGS 9.5', sku: 'OHTN-001-B95', mono: 'SO', qty: 1, cost: 1200, retail: 1550, median: 1480, sales: 5, lastSold: 'Sep 5', history: [1390, 1420, 1465, 1510, 1495, 1470, 1480] },
-  { id: 'moxs-unl', name: 'Mox Sapphire', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8.5', sku: 'MOXS-UNL-B85', mono: 'MS', qty: 1, cost: 4200, retail: 5200, median: 4050, sales: 3, lastSold: 'Sep 4', history: [5100, 4950, 4700, 4500, 4300, 4150, 4050] },
-  { id: 'lufy-aa', name: 'Monkey D. Luffy Alt Art', set: 'Wings of the Captain · One Piece TCG', category: 'onepiece', grade: 'PSA 10', sku: 'LUFY-AA-P10', mono: 'ML', qty: 3, cost: 95, retail: 160, median: 210, sales: 5, lastSold: 'Sep 8', history: [128, 142, 158, 175, 188, 199, 210] },
-  { id: 'jrdn-057', name: 'Michael Jordan RC #57', set: '1986 Fleer · Basketball', category: 'basketball', grade: 'PSA 8', sku: 'JRDN-057-P8', mono: 'MJ', qty: 1, cost: 8200, retail: 9800, median: 9400, sales: 3, lastSold: 'Sep 3', history: [9050, 9150, 9280, 9360, 9300, 9350, 9400] },
-  { id: 'pika-173', name: 'Pikachu #173', set: 'Pokémon 151 · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'PIKA-173-P10', mono: 'PK', qty: 2, cost: 250, retail: 320, median: 400, sales: 5, lastSold: 'Sep 6', history: [298, 315, 332, 354, 371, 388, 400] },
-  { id: 'grif-001', name: 'Ken Griffey Jr RC #1', set: '1989 Upper Deck · Baseball', category: 'baseball', grade: 'PSA 10', sku: 'GRIF-001-P10', mono: 'KG', qty: 1, cost: 1450, retail: 1900, median: 1610, sales: 4, lastSold: 'Sep 2', history: [1720, 1695, 1670, 1650, 1630, 1615, 1610] },
-  { id: 'chzb-004s', name: 'Charizard Shadowless #4', set: 'Base Set · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'CHZB-004S-P9', mono: 'CS', qty: 1, cost: 3800, retail: 4600, median: 4550, sales: 3, lastSold: 'Sep 1', history: [4420, 4470, 4510, 4530, 4545, 4548, 4550] },
-  { id: 'kobe-138', name: 'Kobe Bryant RC #138', set: '1996 Topps Chrome · Basketball', category: 'basketball', grade: 'PSA 10', sku: 'KOBE-138-P10', mono: 'KB', qty: 1, cost: 2600, retail: 3200, median: 2500, sales: 4, lastSold: 'Sep 7', history: [3050, 2950, 2820, 2700, 2610, 2550, 2500] },
+  { id: 'chzx-199', name: 'Charizard ex #199', set: 'Obsidian Flames · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'CHZX-199-P10', mono: 'CE', qty: 1, cost: 210, retail: 389, median: 462, lastSoldPrice: 471, sales: 5, lastSoldDate: 'Sep 6', history: [268, 301, 329, 352, 398, 431, 462] },
+  { id: 'umbv-215', name: 'Umbreon VMAX Alt Art #215', set: 'Evolving Skies · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'UMBV-215-P9', mono: 'UV', qty: 1, cost: 735, retail: 799, median: 690, lastSoldPrice: 675, sales: 4, lastSoldDate: 'Sep 7', history: [810, 795, 772, 748, 726, 705, 690] },
+  { id: 'lugv-186', name: 'Lugia V Alt Art #186', set: 'Silver Tempest · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'LUGV-186-P10', mono: 'LV', qty: 2, cost: 164, retail: 270, median: 315.5, lastSoldPrice: 322, sales: 4, lastSoldDate: 'Sep 7', history: [196, 214, 238, 256, 281, 299, 315.5] },
+  { id: 'wemb-299', name: 'Victor Wembanyama RC #299', set: '2023 Prizm · Basketball', category: 'basketball', grade: 'PSA 10', sku: 'WEMB-299-P10', mono: 'VW', qty: 1, cost: 640, retail: 900, median: 1240, lastSoldPrice: 1310, sales: 5, lastSoldDate: 'Sep 8', history: [720, 810, 905, 1010, 1120, 1185, 1240] },
+  { id: 'ohtn-001', name: 'Shohei Ohtani RC', set: '2018 Bowman Chrome · Baseball', category: 'baseball', grade: 'BGS 9.5', sku: 'OHTN-001-B95', mono: 'SO', qty: 1, cost: 1200, retail: 1550, median: 1480, lastSoldPrice: 1465, sales: 5, lastSoldDate: 'Sep 5', history: [1390, 1420, 1465, 1510, 1495, 1470, 1480] },
+  { id: 'moxs-unl', name: 'Mox Sapphire', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8.5', sku: 'MOXS-UNL-B85', mono: 'MS', qty: 1, cost: 4200, retail: 5200, median: 4050, lastSoldPrice: 3980, sales: 3, lastSoldDate: 'Sep 4', history: [5100, 4950, 4700, 4500, 4300, 4150, 4050] },
+  { id: 'lufy-aa', name: 'Monkey D. Luffy Alt Art', set: 'Wings of the Captain · One Piece TCG', category: 'onepiece', grade: 'PSA 10', sku: 'LUFY-AA-P10', mono: 'ML', qty: 3, cost: 95, retail: 160, median: 210, lastSoldPrice: 215, sales: 5, lastSoldDate: 'Sep 8', history: [128, 142, 158, 175, 188, 199, 210] },
+  { id: 'jrdn-057', name: 'Michael Jordan RC #57', set: '1986 Fleer · Basketball', category: 'basketball', grade: 'PSA 8', sku: 'JRDN-057-P8', mono: 'MJ', qty: 1, cost: 8200, retail: 9800, median: 9400, lastSoldPrice: 9450, sales: 3, lastSoldDate: 'Sep 3', history: [9050, 9150, 9280, 9360, 9300, 9350, 9400] },
+  { id: 'pika-173', name: 'Pikachu #173', set: 'Pokémon 151 · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'PIKA-173-P10', mono: 'PK', qty: 2, cost: 250, retail: 320, median: 400, lastSoldPrice: 412, sales: 5, lastSoldDate: 'Sep 6', history: [298, 315, 332, 354, 371, 388, 400] },
+  { id: 'grif-001', name: 'Ken Griffey Jr RC #1', set: '1989 Upper Deck · Baseball', category: 'baseball', grade: 'PSA 10', sku: 'GRIF-001-P10', mono: 'KG', qty: 1, cost: 1450, retail: 1900, median: 1610, lastSoldPrice: 1595, sales: 4, lastSoldDate: 'Sep 2', history: [1720, 1695, 1670, 1650, 1630, 1615, 1610] },
+  { id: 'chzb-004s', name: 'Charizard Shadowless #4', set: 'Base Set · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'CHZB-004S-P9', mono: 'CS', qty: 1, cost: 3800, retail: 4600, median: 4550, lastSoldPrice: 4560, sales: 3, lastSoldDate: 'Sep 1', history: [4420, 4470, 4510, 4530, 4545, 4548, 4550] },
+  { id: 'kobe-138', name: 'Kobe Bryant RC #138', set: '1996 Topps Chrome · Basketball', category: 'basketball', grade: 'PSA 10', sku: 'KOBE-138-P10', mono: 'KB', qty: 1, cost: 2600, retail: 3200, median: 2500, lastSoldPrice: 2470, sales: 4, lastSoldDate: 'Sep 7', history: [3050, 2950, 2820, 2700, 2610, 2550, 2500] },
 ];
 
 // Draggable plan slider: card capacity → monthly price. Index order matters —
@@ -92,6 +95,7 @@ const state = {
   currency: 'USD',
   planIndex: CURRENT_PLAN_INDEX_DEFAULT,
   currentPlanIndex: CURRENT_PLAN_INDEX_DEFAULT,
+  editingId: null,
 };
 
 const activityLog = [
@@ -132,6 +136,15 @@ function opportunityMath(card) {
   const extraPerCard = priceDelta;
   const extraTotal = extraPerCard * card.qty;
   return { current, suggested, priceDelta, pctDelta, extraPerCard, extraTotal };
+}
+
+// The headline profit/loss figure for a card's current position: additional profit
+// available (opportunity), value already lost to a market drop (at risk), or plain
+// unrealized profit at today's market price (stable).
+function pnlInfo(card, status) {
+  if (status === 'gain') return { label: 'Opportunity', value: opportunityMath(card).extraTotal, cls: 'good', sign: '+' };
+  if (status === 'risk') return { label: 'At risk', value: (card.cost - card.median) * card.qty, cls: 'critical', sign: '-' };
+  return { label: 'Unrealized profit', value: (card.median - card.cost) * card.qty, cls: 'neutral', sign: '+' };
 }
 
 function sparkline(history, dotColorVar, w, h) {
@@ -184,11 +197,39 @@ function showToast(msg) {
 
 /* ------------------------------ TEMPLATES ---------------------------------- */
 
+/* Shared inline-edit fields — used by both the grid tile and the list row so
+   editing looks and behaves identically wherever it's triggered from. No modal:
+   these render directly in place of the card's normal content. */
+function cardEditFieldsHTML(card) {
+  const categoryOptions = Object.entries(CATEGORY_META)
+    .map(([key, m]) => `<option value="${key}" ${key === card.category ? 'selected' : ''}>${m.label}</option>`)
+    .join('');
+  const symbol = CURRENCIES[state.currency].symbol;
+  const f = (field, extra = '') => `data-field="${field}" data-id="${card.id}" ${extra}`;
+  return `
+    <label class="form-field">Card name<input type="text" ${f('name')} value="${escapeAttr(card.name)}"></label>
+    <div class="form-row">
+      <label class="form-field">Set<input type="text" ${f('set')} value="${escapeAttr(card.set)}"></label>
+      <label class="form-field">Grade<input type="text" ${f('grade')} value="${escapeAttr(card.grade)}"></label>
+    </div>
+    <div class="form-row">
+      <label class="form-field">Category<select ${f('category')}>${categoryOptions}</select></label>
+      <label class="form-field">SKU / ticker<input type="text" ${f('sku')} value="${escapeAttr(card.sku)}" class="mono"></label>
+    </div>
+    <div class="form-row three">
+      <label class="form-field">Qty in stock<input type="number" min="0" step="1" ${f('qty')} value="${card.qty}"></label>
+      <label class="form-field"><span>Cost (${symbol})</span><input type="number" min="0" step="0.01" ${f('cost')} value="${card.cost}"></label>
+      <label class="form-field"><span>Retail (${symbol})</span><input type="number" min="0" step="0.01" ${f('retail')} value="${card.retail}"></label>
+    </div>`;
+}
+
 function cardTileHTML(card) {
+  if (state.editingId === card.id) return cardTileEditHTML(card);
   const status = getStatus(card);
   const meta = STATUS_META[status];
   const cat = CATEGORY_META[card.category];
   const d = deltaPct(card);
+  const pnl = pnlInfo(card, status);
   return `
   <article class="card-tile" data-id="${card.id}">
     <div class="card-art" style="background:linear-gradient(135deg, ${cat.c1}, ${cat.c2})">
@@ -211,10 +252,15 @@ function cardTileHTML(card) {
           <span class="card-price mono">${fmt(card.median)}</span>
           <span class="card-delta ${meta.deltaClass}">${meta.icon(11)}${pct(d)}</span>
         </div>
+        <div class="card-lastsold">Last sold <b class="mono">${fmt(card.lastSoldPrice)}</b> · ${card.lastSoldDate}</div>
       </div>
       ${rangeGauge(card, status)}
+      <div class="card-pnl ${pnl.cls}">
+        <span>${pnl.label}</span>
+        <b class="mono">${pnl.sign}${fmt(Math.abs(pnl.value))}</b>
+      </div>
       <div class="card-foot">
-        <span class="card-foot-meta">${card.sales} sales · ${card.lastSold}</span>
+        <span class="card-foot-meta">Qty ${card.qty} · ${card.sales} sales</span>
         <span class="card-foot-actions">
           <button class="card-foot-btn" data-refresh="${card.id}" type="button">${ICONS.refresh(13)}<span>Refresh</span></button>
           <button class="card-foot-btn" data-edit="${card.id}" type="button">${ICONS.edit(13)}<span>Edit</span></button>
@@ -224,11 +270,31 @@ function cardTileHTML(card) {
   </article>`;
 }
 
+function cardTileEditHTML(card) {
+  const cat = CATEGORY_META[card.category];
+  return `
+  <article class="card-tile is-editing" data-id="${card.id}">
+    <div class="card-art" style="background:linear-gradient(135deg, ${cat.c1}, ${cat.c2})">
+      <span class="status-flag stable" style="background:rgba(255,255,255,0.92)">${ICONS.edit(11)}Editing</span>
+      <span class="card-art-mono" aria-hidden="true">${card.mono}</span>
+    </div>
+    <div class="card-body card-edit-fields">
+      ${cardEditFieldsHTML(card)}
+      <div class="card-foot">
+        <span class="card-foot-meta">Changes save as you type</span>
+        <button class="card-foot-btn card-foot-btn-primary" data-done-edit="${card.id}" type="button">${ICONS.check(13)}<span>Done</span></button>
+      </div>
+    </div>
+  </article>`;
+}
+
 function listRowHTML(card) {
+  if (state.editingId === card.id) return listRowEditHTML(card);
   const status = getStatus(card);
   const meta = STATUS_META[status];
   const cat = CATEGORY_META[card.category];
   const d = deltaPct(card);
+  const pnl = pnlInfo(card, status);
   return `
   <div class="list-row" data-id="${card.id}">
     <div class="list-card-cell">
@@ -242,17 +308,33 @@ function listRowHTML(card) {
       <span class="t-symbol">$${card.sku}</span>
       <span class="list-spark">${sparkline(card.history, `var(--${meta.deltaClass === 'good' ? 'good' : meta.deltaClass === 'critical' ? 'critical' : 'neutral'}-500)`, 44, 16)}</span>
     </div>
+    <span class="mono-cell">${fmt(card.cost)}</span>
+    <span class="mono-cell">${fmt(card.lastSoldPrice)}</span>
     <span class="mono-cell">${fmt(card.median)}</span>
-    <span class="mono-cell list-col-retail">${fmt(card.retail)}</span>
-    <span class="mono-cell list-col-cost">${fmt(card.cost)}</span>
+    <span class="mono-cell">${fmt(card.retail)}</span>
+    <span class="mono-cell">${fmt(marketValue(card))}</span>
     <span class="mono-cell">${marketMarginPct(card).toFixed(0)}%</span>
     <span class="delta-cell ${meta.deltaClass}">${meta.icon(11)}${pct(d)}</span>
+    <span class="delta-cell ${pnl.cls}">${pnl.sign}${fmt(Math.abs(pnl.value))}</span>
     <span><span class="status-pill ${meta.pillClass}">${meta.label}</span></span>
-    <span class="list-col-synced mono" style="color:var(--ink-400); font-size:11.5px;">${card.lastSold}</span>
+    <span class="mono" style="color:var(--ink-400); font-size:11.5px;">${card.lastSoldDate}</span>
     <span class="list-actions">
       <button class="list-sync-btn" data-refresh="${card.id}" type="button" aria-label="Refresh ${card.name}">${ICONS.refresh(14)}</button>
       <button class="list-sync-btn" data-edit="${card.id}" type="button" aria-label="Edit ${card.name}">${ICONS.edit(14)}</button>
     </span>
+  </div>`;
+}
+
+function listRowEditHTML(card) {
+  return `
+  <div class="list-row list-row-editing" data-id="${card.id}">
+    <div class="list-edit-fields">
+      ${cardEditFieldsHTML(card)}
+    </div>
+    <div class="list-edit-actions">
+      <span class="card-foot-meta">Changes save as you type</span>
+      <button class="btn btn-primary btn-sm" data-done-edit="${card.id}" type="button">${ICONS.check(13)}<span>Done editing</span></button>
+    </div>
   </div>`;
 }
 
@@ -319,7 +401,7 @@ function alertCardHTML(card) {
     <div class="alert-main">
       <div class="alert-top">
         <span class="alert-headline ${meta.flagClass}">${headline}</span>
-        <span class="alert-time">Synced ${card.lastSold}</span>
+        <span class="alert-time">Synced ${card.lastSoldDate}</span>
       </div>
       <div class="alert-card-name">${card.name} <span style="color:var(--ink-400); font-weight:500;">· ${card.grade}</span></div>
       <div class="alert-card-set">${card.set} · $${card.sku}</div>
@@ -500,7 +582,7 @@ function renderAlerts() {
     </div>`;
 }
 
-/* ------------------------- INDIVIDUAL EDIT (modal) -------------------------- */
+/* ------------------------- INDIVIDUAL EDIT (inline, no modal) --------------- */
 
 function populateSelect(select, includeAll) {
   const options = (includeAll ? ['<option value="all">All categories</option>'] : [])
@@ -508,46 +590,41 @@ function populateSelect(select, includeAll) {
   select.innerHTML = options.join('');
 }
 
-function openEditModal(id) {
-  const card = CARDS.find((c) => c.id === id);
-  if (!card) return;
-  document.getElementById('editForm').dataset.editingId = id;
-  document.getElementById('editModalTitle').textContent = `Edit ${card.name}`;
-  document.getElementById('editName').value = card.name;
-  document.getElementById('editSet').value = card.set;
-  document.getElementById('editGrade').value = card.grade;
-  document.getElementById('editSku').value = card.sku;
-  document.getElementById('editCategory').value = card.category;
-  document.getElementById('editQty').value = card.qty;
-  document.getElementById('editCost').value = card.cost;
-  document.getElementById('editRetail').value = card.retail;
-  const symbol = CURRENCIES[state.currency].symbol;
-  document.getElementById('editCostUnit').textContent = symbol;
-  document.getElementById('editRetailUnit').textContent = symbol;
-  document.getElementById('editModalBackdrop').hidden = false;
-  document.getElementById('editName').focus();
+// Only one card edits inline at a time. Starting a new edit re-renders the
+// inventory so that one tile/row swaps to its editable fields in place.
+function startCardEdit(id) {
+  if (state.editingId === id) return;
+  state.editingId = id;
+  renderInventory();
+  requestAnimationFrame(() => {
+    const first = document.querySelector('.is-editing input, .list-row-editing input');
+    if (first) first.focus();
+  });
 }
 
-function closeEditModal() {
-  document.getElementById('editModalBackdrop').hidden = true;
-}
-
-function handleEditFormSubmit(e) {
-  e.preventDefault();
-  const id = document.getElementById('editForm').dataset.editingId;
-  const card = CARDS.find((c) => c.id === id);
-  if (!card) return;
-  card.name = document.getElementById('editName').value.trim() || card.name;
-  card.set = document.getElementById('editSet').value.trim() || card.set;
-  card.grade = document.getElementById('editGrade').value.trim() || card.grade;
-  card.sku = document.getElementById('editSku').value.trim() || card.sku;
-  card.category = document.getElementById('editCategory').value;
-  card.qty = Math.max(0, parseInt(document.getElementById('editQty').value, 10) || 0);
-  card.cost = Math.max(0, parseFloat(document.getElementById('editCost').value) || 0);
-  card.retail = Math.max(0, parseFloat(document.getElementById('editRetail').value) || 0);
-  closeEditModal();
+function stopCardEdit() {
+  const id = state.editingId;
+  if (!id) return;
+  state.editingId = null;
   renderAll();
-  showToast(`Saved changes to ${card.name}`);
+  const card = CARDS.find((c) => c.id === id);
+  if (card) showToast(`Saved changes to ${card.name}`);
+}
+
+// Fields commit straight to the CARDS array as you type — matches the bulk
+// spreadsheet's "changes save as you type" behavior, just scoped to one card.
+function handleInlineEditInput(e) {
+  const el = e.target.closest('[data-field]');
+  if (!el || !el.closest('.is-editing, .list-row-editing')) return;
+  const card = CARDS.find((c) => c.id === el.dataset.id);
+  if (!card) return;
+  const field = el.dataset.field;
+  if (field === 'qty' || field === 'cost' || field === 'retail') {
+    const num = parseFloat(el.value);
+    if (!isNaN(num) && num >= 0) card[field] = num;
+  } else {
+    card[field] = el.value;
+  }
 }
 
 /* --------------------------- BULK EDIT (spreadsheet) ------------------------ */
@@ -702,7 +779,9 @@ function driftCard(card) {
   const drift = Math.random() * 0.07 - 0.035;
   card.median = Math.max(5, +(card.median * (1 + drift)).toFixed(2));
   card.history = [...card.history.slice(1), card.median];
-  card.lastSold = 'Just now';
+  const saleDrift = Math.random() * 0.06 - 0.03;
+  card.lastSoldPrice = Math.max(5, +(card.median * (1 + saleDrift)).toFixed(2));
+  card.lastSoldDate = 'Just now';
 }
 
 function addActivityEntry(text, alert) {
@@ -762,7 +841,6 @@ function handleCardRefresh(id, btnEl) {
 
 function populateCategoryFilter() {
   populateSelect(document.getElementById('filterCategory'), true);
-  populateSelect(document.getElementById('editCategory'), false);
 }
 
 function populateCurrencySelect() {
@@ -820,12 +898,19 @@ function bindEvents() {
   gridBtn.addEventListener('click', () => setView('grid'));
   listBtn.addEventListener('click', () => setView('list'));
 
-  // card refresh + edit (event delegation, survives re-renders)
+  // card refresh + inline edit (event delegation, survives re-renders)
   document.getElementById('tab-inventory').addEventListener('click', (e) => {
     const refreshBtn = e.target.closest('[data-refresh]');
     if (refreshBtn) { handleCardRefresh(refreshBtn.dataset.refresh, refreshBtn); return; }
     const editBtn = e.target.closest('[data-edit]');
-    if (editBtn) { openEditModal(editBtn.dataset.edit); return; }
+    if (editBtn) { startCardEdit(editBtn.dataset.edit); return; }
+    const doneBtn = e.target.closest('[data-done-edit]');
+    if (doneBtn) { stopCardEdit(); return; }
+  });
+  document.getElementById('tab-inventory').addEventListener('input', handleInlineEditInput);
+  document.getElementById('tab-inventory').addEventListener('change', handleInlineEditInput);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.editingId) stopCardEdit();
   });
 
   // edit all → spreadsheet mode
@@ -833,17 +918,6 @@ function bindEvents() {
   document.getElementById('doneEditingBtn').addEventListener('click', exitSheetMode);
   document.getElementById('sheetBody').addEventListener('input', handleSheetInput);
   document.getElementById('sheetBody').addEventListener('change', handleSheetInput);
-
-  // individual edit modal
-  document.getElementById('editForm').addEventListener('submit', handleEditFormSubmit);
-  document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
-  document.getElementById('editModalClose').addEventListener('click', closeEditModal);
-  document.getElementById('editModalBackdrop').addEventListener('click', (e) => {
-    if (e.target.id === 'editModalBackdrop') closeEditModal();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !document.getElementById('editModalBackdrop').hidden) closeEditModal();
-  });
 
   // account menu dropdown
   const avatarBtn = document.getElementById('avatarBtn');

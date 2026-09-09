@@ -512,6 +512,7 @@ a { color: inherit; text-decoration: none; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
   gap: 16px;
+  align-items: start;
 }
 
 .card-tile {
@@ -593,6 +594,9 @@ a { color: inherit; text-decoration: none; }
 .card-delta.critical { color: var(--critical-600); }
 .card-delta.neutral { color: var(--neutral-500); }
 
+.card-lastsold { font-size: 11px; color: var(--ink-400); margin-top: 3px; }
+.card-lastsold b { color: var(--ink-700); font-weight: 600; }
+
 /* range gauge — the signature: cost / retail / market-median on one scale */
 .range-gauge { padding-top: 2px; }
 .range-track { position: relative; height: 5px; border-radius: 20px; background: var(--neutral-soft); }
@@ -607,6 +611,20 @@ a { color: inherit; text-decoration: none; }
 .range-labels { display: flex; justify-content: space-between; margin-top: 9px; font-size: 10.5px; color: var(--ink-400); }
 .range-labels b { color: var(--ink-700); font-family: var(--font-mono); font-weight: 600; }
 
+/* per-card profit & loss headline: opportunity gain, at-risk loss, or unrealized profit */
+.card-pnl { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; }
+.card-pnl span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.card-pnl b { font-size: 13px; font-weight: 700; }
+.card-pnl.good { background: var(--good-soft); }
+.card-pnl.good span { color: var(--good-600); }
+.card-pnl.good b { color: var(--good-600); }
+.card-pnl.critical { background: var(--critical-soft); }
+.card-pnl.critical span { color: var(--critical-600); }
+.card-pnl.critical b { color: var(--critical-600); }
+.card-pnl.neutral { background: var(--neutral-soft); }
+.card-pnl.neutral span { color: var(--neutral-600); }
+.card-pnl.neutral b { color: var(--ink-900); }
+
 .card-foot { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 1px; }
 .card-foot-meta { font-size: 11px; color: var(--ink-400); }
 .card-foot-actions { display: flex; align-items: center; gap: 2px; }
@@ -614,18 +632,29 @@ a { color: inherit; text-decoration: none; }
 .card-foot-btn:hover { background: var(--surface-sunken); color: var(--ink-900); }
 .card-foot-btn svg { transition: transform .4s ease; }
 .card-foot-btn.is-syncing svg { animation: spin .8s linear infinite; }
+.card-foot-btn-primary { color: var(--accent-600); }
+.card-foot-btn-primary:hover { background: var(--accent-soft); color: var(--accent-600); }
+
+/* inline card editing (grid tile) — no popup, fields render right in the tile */
+.card-tile.is-editing { border-color: var(--accent-400); box-shadow: 0 0 0 3px var(--accent-ring); }
+.card-edit-fields { gap: 14px; }
+.card-edit-fields .form-row { gap: 10px; }
+.card-edit-fields .form-row.three { grid-template-columns: 1fr; }
+.card-edit-fields .form-field { gap: 4px; }
 
 /* ============================== LIST VIEW ================================ */
 
 .card-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.list-scroll { overflow-x: auto; }
 .card-list-head, .list-row {
   display: grid;
-  grid-template-columns: 1.9fr 1fr 1.05fr 0.85fr 0.85fr 0.85fr 0.95fr 1fr 0.95fr 64px;
+  grid-template-columns: 1.8fr 0.9fr 0.75fr 0.8fr 0.9fr 0.8fr 0.9fr 0.65fr 0.85fr 0.9fr 0.9fr 0.7fr 60px;
+  min-width: 1520px;
   align-items: center;
   gap: 10px;
   padding: 11px 16px;
 }
-.card-list-head { background: var(--surface-sunken); border-bottom: 1px solid var(--border); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-400); }
+.card-list-head { background: var(--surface-sunken); border-bottom: 1px solid var(--border); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-400); white-space: nowrap; }
 .list-row { border-bottom: 1px solid var(--border); transition: background .12s ease; }
 .list-row:hover { background: var(--surface-sunken); }
 .list-row:last-child { border-bottom: none; }
@@ -651,6 +680,11 @@ a { color: inherit; text-decoration: none; }
 .list-sync-btn { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; border: none; background: none; color: var(--ink-400); cursor: pointer; }
 .list-sync-btn:hover { background: var(--surface-sunken); color: var(--ink-900); }
 .list-sync-btn.is-syncing svg { animation: spin .8s linear infinite; }
+
+/* inline row editing — replaces the row's grid layout with a plain form, no popup */
+.list-row-editing { display: block; min-width: 0; padding: 16px; background: var(--surface-sunken); }
+.list-edit-fields { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+.list-edit-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
 
 /* status pill (shared: badges, connection status) */
 .status-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 20px; white-space: nowrap; }
@@ -944,34 +978,11 @@ a { color: inherit; text-decoration: none; }
 }
 .toast.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
 
-/* ============================== EDIT MODAL =============================== */
+/* ========================= SHARED FORM FIELDS (no modal) =================== */
+/* Used by Settings forms and by inline card editing (grid tile + list row) —
+   editing a card never opens a popup, it swaps that card's own display for
+   these same fields in place. */
 
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(4, 7, 16, 0.6);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 200;
-}
-.modal {
-  width: 100%;
-  max-width: 460px;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-}
-.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
-.modal-head h2 { font-size: 16px; font-weight: 600; }
-.modal-close { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; border: none; background: none; color: var(--ink-400); cursor: pointer; }
-.modal-close:hover { background: var(--surface-sunken); color: var(--ink-900); }
-.modal-form { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-row.three { grid-template-columns: repeat(3, 1fr); }
 .form-field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink-400); text-transform: uppercase; letter-spacing: 0.03em; }
@@ -987,8 +998,6 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: normal;
 }
 .form-field input:focus, .form-field select:focus { outline: none; border-color: var(--accent-400); box-shadow: 0 0 0 3px var(--accent-ring); }
-.modal-note { font-size: 11.5px; color: var(--ink-400); background: var(--surface-sunken); border-radius: 8px; padding: 9px 11px; line-height: 1.5; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 2px; }
 
 /* ============================ RESPONSIVE ================================ */
 
@@ -996,8 +1005,6 @@ a { color: inherit; text-decoration: none; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .overview-split { grid-template-columns: 1fr; }
   .connections-grid { grid-template-columns: 1fr; }
-  .card-list-head, .list-row { grid-template-columns: 1.6fr 0.9fr 1fr 0.8fr 0.8fr 0.9fr 1fr 64px; }
-  .list-col-cost, .list-col-synced { display: none; }
 }
 
 @media (max-width: 900px) {
@@ -1012,8 +1019,6 @@ a { color: inherit; text-decoration: none; }
   .content { padding: 18px 18px 50px; }
   .search { width: 200px; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
-  .card-list-head { display: none; }
-  .list-row { grid-template-columns: 1fr; gap: 6px; padding: 12px; }
 }
 
 @media (max-width: 560px) {
