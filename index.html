@@ -1,73 +1,326 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#081525" />
-    <title>Card Margin Monitor</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <a class="brand" href="#dashboard" aria-label="Card Margin Monitor home">
-          <span>Card<span class="brand-slash">/</span>Margin</span>
-        </a>
-        <p class="store-switcher">COLLECTOR'S VAULT <span>⌄</span></p>
-        <nav aria-label="Primary navigation">
-          <a class="nav-link active" href="#dashboard">Home</a>
-          <a class="nav-link" href="#cards">Inventory <b>184</b></a>
-          <a class="nav-link" href="#alerts">Alerts <b class="alert-badge">12</b></a>
-          <a class="nav-link" href="#history">Market</a>
-        </nav>
-        <div class="plan-card">
-          <span class="plan-dot"></span>
-          <p>Pro plan</p>
-          <strong>184 <small>/ 800 cards</small></strong>
-          <div class="usage"><i></i></div>
-          <button type="button" id="managePlan">Manage plan</button>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cardline — Margin & Market Monitor</title>
+  <meta name="description" content="Sync Shopify card inventory with live eBay sold prices, track margin in real time, and catch pricing alerts before they cost you." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%226%22 fill=%22%234F46E5%22/><path d=%22M6 15l4-6 3 4 5-7%22 stroke=%22white%22 stroke-width=%222.2%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M4 15.5l5-7.5 3.5 4.5L19 5" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="brand-name">Cardline</span>
+      </div>
+
+      <button class="store-switcher" id="storeSwitcher" type="button">
+        <span class="store-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 9l1-5h14l1 5M4 9a2 2 0 002 2 2 2 0 002-2 2 2 0 002 2 2 2 0 002-2 2 2 0 002 2 2 2 0 002-2M4 9v9a1 1 0 001 1h4v-6h6v6h4a1 1 0 001-1V9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="store-info">
+          <span class="store-name">Vintage Vault Cards</span>
+          <span class="store-domain">vintage-vault.myshopify.com</span>
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <nav class="nav" aria-label="Primary">
+        <button class="nav-item is-active" data-tab="overview" type="button">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M4 13h5v7H4zM10 8h5v12h-5zM16 4h5v16h-5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span>Overview</span>
+        </button>
+        <button class="nav-item" data-tab="inventory" type="button">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3" stroke="currentColor" stroke-width="1.7"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3" stroke="currentColor" stroke-width="1.7"/></svg>
+          <span>Inventory</span>
+          <span class="nav-tag" id="navInventoryCount">—</span>
+        </button>
+        <button class="nav-item" data-tab="alerts" type="button">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M12 4v2M12 4a6 6 0 016 6c0 3.2.8 4.6 1.6 5.6.3.4 0 1-.5 1H4.9c-.5 0-.8-.6-.5-1C5.2 14.6 6 13.2 6 10a6 6 0 016-6zM9.5 19a2.6 2.6 0 005 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Alerts</span>
+          <span class="nav-badge" id="navAlertsBadge">0</span>
+        </button>
+        <button class="nav-item" data-tab="sync" type="button">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M4 12a8 8 0 0113.7-5.7M20 12a8 8 0 01-13.7 5.7M17 4v3.3h-3.3M7 20v-3.3h3.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Sync &amp; integrations</span>
+        </button>
+        <button class="nav-item" data-tab="billing" type="button">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.7"/></svg>
+          <span>Plan &amp; billing</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="plan-widget" id="planWidget">
+          <div class="plan-widget-top">
+            <span class="plan-name">Pro plan</span>
+            <a href="#" class="plan-upgrade" data-tab-link="billing">Upgrade →</a>
+          </div>
+          <div class="plan-meter"><div class="plan-meter-fill" id="planMeterFill"></div></div>
+          <span class="plan-meter-label" id="planMeterLabel">— of 800 SKUs tracked</span>
         </div>
-        <div class="account"><span class="avatar">RD</span><span><strong>Riccardo D.</strong><small>Store owner</small></span><button aria-label="Account menu">•••</button></div>
-      </aside>
+        <div class="sync-pill" id="syncPill">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span id="syncPillText">Live · syncing every 2h</span>
+        </div>
+      </div>
+    </aside>
 
-      <main id="dashboard">
-        <header>
-          <div><p class="date">CARD MARKET INTELLIGENCE · LIVE</p><h1>Your card market<br /><span>command center.</span></h1><p class="subtitle">Track sold-market values, protect every margin, and know exactly what needs a move.</p></div>
-          <div class="header-actions"><span class="sync-status"><i></i> Last synced 8:12 AM</span><button class="refresh" id="refreshPrices">↻ <span>Refresh prices</span></button></div>
-        </header>
+    <!-- ============ MAIN ============ -->
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1 id="pageTitle">Overview</h1>
+          <p id="pageSubtitle">Your card portfolio against the live eBay market, at a glance.</p>
+        </div>
+        <div class="topbar-actions">
+          <label class="search" for="globalSearch">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input id="globalSearch" type="text" placeholder="Search cards, sets, SKUs…" autocomplete="off" />
+          </label>
+          <button class="icon-btn" id="notifBtn" type="button" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M12 4v2M12 4a6 6 0 016 6c0 3.2.8 4.6 1.6 5.6.3.4 0 1-.5 1H4.9c-.5 0-.8-.6-.5-1C5.2 14.6 6 13.2 6 10a6 6 0 016-6zM9.5 19a2.6 2.6 0 005 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="icon-btn-dot" id="notifDot"></span>
+          </button>
+          <button class="btn btn-primary" id="syncNowBtn" type="button">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 12a8 8 0 0113.7-5.7M20 12a8 8 0 01-13.7 5.7M17 4v3.3h-3.3M7 20v-3.3h3.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Sync now</span>
+          </button>
+          <div class="avatar" title="Riccardo · Store owner">RD</div>
+        </div>
+      </header>
 
-        <div class="ticker" aria-label="Live market ticker"><span>CHARIZARD ex #199 <b>$462.00</b> <i>+8.1%</i></span><span>LUGIA V #186 <b>$315.50</b> <i>+4.2%</i></span><span>UMBREON VMAX #215 <b>$716.00</b> <em>-2.6%</em></span><span>MEW ex #193 <b>$386.00</b> <i>+1.4%</i></span></div>
+      <main class="content">
 
-        <section class="market-strip" aria-label="Market summary">
-          <div><span>Portfolio market value</span><strong>$48,260.50</strong><small class="positive">↑ 3.4% <em>over 7 days</em></small></div>
-          <div><span>Estimated inventory cost</span><strong>$36,184.80</strong><small>Across 184 tracked cards</small></div>
-          <div><span>Unrealized margin</span><strong>24.99%</strong><small class="positive">↑ 1.8 pts <em>since last week</em></small></div>
-          <div class="sync-tile"><span>Next scan</span><strong>8:00 PM</strong><small>Pro plan · twice daily</small></div>
+        <!-- ---------- OVERVIEW ---------- -->
+        <section class="tab-panel is-active" id="tab-overview">
+          <div class="kpi-grid" id="kpiGrid"></div>
+
+          <section class="panel ticker-panel">
+            <div class="panel-head">
+              <h2>Market ticker</h2>
+              <span class="panel-note">Live median vs. your retail price, every tracked SKU</span>
+            </div>
+            <div class="ticker-strip" id="tickerStrip"></div>
+          </section>
+
+          <div class="overview-split">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Needs attention</h2>
+                <button class="link-btn" data-tab-link="alerts">View all alerts</button>
+              </div>
+              <div class="attention-list" id="attentionList"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Recent sync activity</h2>
+                <button class="link-btn" data-tab-link="sync">Sync settings</button>
+              </div>
+              <ol class="activity-list" id="activityList"></ol>
+            </section>
+          </div>
         </section>
 
-        <section class="focus-head"><div><p class="eyebrow">Needs review</p><h2>Market movements</h2></div><button class="text-button" id="viewAll">View all alerts <span>→</span></button></section>
-        <section class="alert-grid" id="alerts">
-          <article class="alert-card increase"><div class="alert-icon">↗</div><div class="alert-title"><p>PRICE INCREASE OPPORTUNITY</p><span>7 cards</span></div><h3>Capture an estimated <strong>$1,246</strong> in upside</h3><p>Recent eBay sales have moved above your current retail prices.</p><button type="button" data-filter="increase">Review opportunities <span>→</span></button></article>
-          <article class="alert-card warning"><div class="alert-icon">!</div><div class="alert-title"><p>MARGIN LOSS WARNING</p><span>5 cards</span></div><h3><strong>$582</strong> of inventory at or below cost</h3><p>These cards need a pricing or holding decision before the next scan.</p><button type="button" data-filter="warning">Review warnings <span>→</span></button></article>
+        <!-- ---------- INVENTORY ---------- -->
+        <section class="tab-panel" id="tab-inventory">
+          <div class="toolbar">
+            <label class="search search-inline" for="inventorySearch">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <input id="inventorySearch" type="text" placeholder="Filter by card, set, or SKU…" autocomplete="off" />
+            </label>
+
+            <div class="toolbar-filters">
+              <select id="filterCategory" class="select"></select>
+              <select id="filterStatus" class="select">
+                <option value="all">All statuses</option>
+                <option value="gain">Opportunities</option>
+                <option value="risk">At risk</option>
+                <option value="stable">Stable</option>
+              </select>
+              <select id="sortBy" class="select">
+                <option value="delta-desc">Sort: Δ vs retail (high–low)</option>
+                <option value="delta-asc">Sort: Δ vs retail (low–high)</option>
+                <option value="margin-desc">Sort: market margin (high–low)</option>
+                <option value="value-desc">Sort: market value (high–low)</option>
+                <option value="name-asc">Sort: name (A–Z)</option>
+              </select>
+            </div>
+
+            <div class="view-toggle" role="group" aria-label="Card view">
+              <button class="view-btn is-active" id="viewGridBtn" type="button" aria-pressed="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.7"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.7"/></svg>
+                <span>Grid</span>
+              </button>
+              <button class="view-btn" id="viewListBtn" type="button" aria-pressed="false">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span>List</span>
+              </button>
+            </div>
+          </div>
+
+          <p class="results-count" id="resultsCount"></p>
+
+          <div class="card-grid" id="cardGrid"></div>
+
+          <div class="card-list" id="cardList" hidden>
+            <div class="card-list-head">
+              <span>Card</span>
+              <span>Ticker</span>
+              <span>Market median</span>
+              <span class="list-col-retail">Retail</span>
+              <span class="list-col-cost">Cost</span>
+              <span>Margin</span>
+              <span>Δ vs retail</span>
+              <span>Status</span>
+              <span class="list-col-synced">Synced</span>
+              <span></span>
+            </div>
+            <div id="cardListBody"></div>
+          </div>
+
+          <div class="empty-state" id="emptyState" hidden>
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.6"/><path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <h3>No cards match those filters</h3>
+            <p>Try clearing the search or switching status to "All statuses".</p>
+            <button class="btn btn-secondary" id="clearFiltersBtn" type="button">Clear filters</button>
+          </div>
         </section>
 
-        <section class="table-section" id="cards">
-          <div class="table-head"><div><p class="eyebrow">Latest signals</p><h2>Cards to action</h2></div><div class="filters"><button class="filter active" data-filter="all">All <b>12</b></button><button class="filter" data-filter="increase">Price increases <b>7</b></button><button class="filter" data-filter="warning">Margin warnings <b>5</b></button></div></div>
-          <div class="data-wrap"><table><thead><tr><th>Card</th><th>eBay median <small>Last 5 sales</small></th><th>Your retail / cost</th><th>Market signal</th><th><span class="sr-only">Actions</span></th></tr></thead>
-            <tbody id="cardRows">
-              <tr data-kind="increase"><td><div class="card-name"><div class="card-art pikachu">⚡</div><div><strong>Charizard ex #199</strong><small>Obsidian Flames · PSA 10</small></div></div></td><td><strong>$462.00</strong><small>5 sales · Sep 6</small></td><td><strong>$389.00</strong><small>Cost $210.00</small></td><td><span class="signal up">↑ $73.00 <small>18.8% above retail</small></span></td><td><button class="row-action" data-name="Charizard ex #199">Review</button></td></tr>
-              <tr data-kind="increase"><td><div class="card-name"><div class="card-art lugia">◈</div><div><strong>Lugia V #186</strong><small>Silver Tempest · PSA 10</small></div></div></td><td><strong>$315.50</strong><small>4 sales · Sep 7</small></td><td><strong>$270.00</strong><small>Cost $164.00</small></td><td><span class="signal up">↑ $45.50 <small>16.9% above retail</small></span></td><td><button class="row-action" data-name="Lugia V #186">Review</button></td></tr>
-              <tr data-kind="warning"><td><div class="card-name"><div class="card-art moon">☾</div><div><strong>Umbreon VMAX #215</strong><small>Evolving Skies · BGS 9.5</small></div></div></td><td><strong>$716.00</strong><small>5 sales · Sep 7</small></td><td><strong>$799.00</strong><small>Cost $735.00</small></td><td><span class="signal down">↓ $19.00 <small>2.6% below cost</small></span></td><td><button class="row-action" data-name="Umbreon VMAX #215">Review</button></td></tr>
-              <tr data-kind="warning"><td><div class="card-name"><div class="card-art mew">✦</div><div><strong>Mew ex #193</strong><small>151 · PSA 10</small></div></div></td><td><strong>$386.00</strong><small>3 sales · Sep 6</small></td><td><strong>$410.00</strong><small>Cost $392.00</small></td><td><span class="signal down">↓ $6.00 <small>1.5% below cost</small></span></td><td><button class="row-action" data-name="Mew ex #193">Review</button></td></tr>
-            </tbody></table></div>
+        <!-- ---------- ALERTS ---------- -->
+        <section class="tab-panel" id="tab-alerts">
+          <div class="alerts-toolbar">
+            <div class="chip-group" id="alertFilterChips">
+              <button class="chip is-active" data-filter="all" type="button">All alerts</button>
+              <button class="chip" data-filter="gain" type="button">Price opportunities</button>
+              <button class="chip" data-filter="risk" type="button">Margin loss warnings</button>
+              <button class="chip" data-filter="reviewed" type="button">Reviewed</button>
+            </div>
+          </div>
+          <div class="alert-feed" id="alertFeed"></div>
         </section>
+
+        <!-- ---------- SYNC & INTEGRATIONS ---------- -->
+        <section class="tab-panel" id="tab-sync">
+          <div class="connections-grid">
+            <div class="connection-card">
+              <div class="connection-head">
+                <span class="connection-icon shopify" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M4 9l1-5h14l1 5M4 9a2 2 0 002 2 2 2 0 002-2 2 2 0 002 2 2 2 0 002-2 2 2 0 002 2 2 2 0 002-2M4 9v9a1 1 0 001 1h4v-6h6v6h4a1 1 0 001-1V9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <div>
+                  <h3>Shopify store</h3>
+                  <p>vintage-vault.myshopify.com</p>
+                </div>
+                <span class="status-pill status-good">Connected</span>
+              </div>
+              <ul class="connection-meta">
+                <li><span>Scopes</span><span>read_products, read_inventory</span></li>
+                <li><span>Products mapped</span><span id="metaMapped">—</span></li>
+                <li><span>Last product sync</span><span>4 minutes ago</span></li>
+              </ul>
+              <button class="btn btn-secondary btn-sm" type="button">Reauthorize</button>
+            </div>
+
+            <div class="connection-card">
+              <div class="connection-head">
+                <span class="connection-icon ebay" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M4 13h5v7H4zM10 8h5v12h-5zM16 4h5v16h-5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+                </span>
+                <div>
+                  <h3>eBay Marketplace Insights</h3>
+                  <p>Sold-listing data for median pricing</p>
+                </div>
+                <span class="status-pill status-good">Connected</span>
+              </div>
+              <ul class="connection-meta">
+                <li><span>Sample window</span><span>Last 3–5 sold listings</span></li>
+                <li><span>Sync frequency</span><span>Every 2 hours (Pro plan)</span></li>
+                <li><span>Last price sync</span><span id="metaLastSync">—</span></li>
+              </ul>
+              <button class="btn btn-secondary btn-sm" type="button">Test connection</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Alert destinations</h2>
+              <span class="panel-note">Where price and margin alerts get delivered</span>
+            </div>
+            <div class="destinations">
+              <label class="destination-row">
+                <span class="destination-label">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Email
+                </span>
+                <span class="destination-detail">riccardo@vintage-vault.com</span>
+                <span class="switch is-on" role="switch" aria-checked="true" tabindex="0"></span>
+              </label>
+              <label class="destination-row">
+                <span class="destination-label">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M8 4h8l3 4v11a1 1 0 01-1 1H6a1 1 0 01-1-1V8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 9h6M9 13h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  Slack — #card-pricing
+                </span>
+                <span class="destination-detail">Webhook connected</span>
+                <span class="switch is-on" role="switch" aria-checked="true" tabindex="0"></span>
+              </label>
+              <label class="destination-row">
+                <span class="destination-label">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M9 10.2c0-.9.9-1.6 2-1.6h2c1.1 0 2 .7 2 1.6M9 15c.9-.7 1.9-1 3-1s2.1.3 3 1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  Discord
+                </span>
+                <span class="destination-detail">Not connected</span>
+                <span class="switch" role="switch" aria-checked="false" tabindex="0"></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Sync log</h2>
+              <span class="panel-note">Latest scheduled and manual runs</span>
+            </div>
+            <div class="sync-log" id="syncLog"></div>
+          </section>
+        </section>
+
+        <!-- ---------- BILLING ---------- -->
+        <section class="tab-panel" id="tab-billing">
+          <section class="panel current-plan-panel">
+            <div class="current-plan-info">
+              <span class="panel-eyebrow">Current plan</span>
+              <h2>Pro — $49/mo</h2>
+              <p>Renews Oct 9, 2026 · 2× daily sync · Slack/Discord webhooks</p>
+            </div>
+            <div class="current-plan-usage">
+              <div class="usage-row">
+                <div class="usage-row-label"><span>Tracked SKUs</span><span id="usageSkuLabel">—</span></div>
+                <div class="plan-meter"><div class="plan-meter-fill" id="usageSkuFill"></div></div>
+              </div>
+              <p class="usage-note">Over the 800-SKU limit adds $10 per additional 200 cards, billed automatically.</p>
+            </div>
+            <button class="btn btn-secondary" type="button">Manage billing</button>
+          </section>
+
+          <div class="pricing-grid" id="pricingGrid"></div>
+        </section>
+
       </main>
     </div>
-    <div class="toast" role="status" aria-live="polite" id="toast"></div>
-    <dialog id="reviewDialog"><button class="close-dialog" aria-label="Close">×</button><p class="eyebrow">Card review</p><h2 id="dialogTitle">Card</h2><p>This prototype is ready to connect each action to Shopify pricing and your alert workflow.</p><button class="refresh close-primary">Close</button></dialog>
-    <script src="./app.js"></script>
-  </body>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
 </html>
