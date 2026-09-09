@@ -93,6 +93,10 @@
                 <span class="account-name">Riccardo Dana</span>
                 <span class="account-email">riccardo@vintage-vault.com</span>
               </div>
+              <button class="account-dropdown-item" data-tab-link="settings" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M19.4 13.5a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V20a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H4a2 2 0 110-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H10a1.7 1.7 0 001-1.5V4a2 2 0 114 0v.2a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V10a1.7 1.7 0 001.5 1H20a2 2 0 110 4h-.2a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                <span>Account settings</span>
+              </button>
               <button class="account-dropdown-item" data-tab-link="billing" type="button">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.6"/></svg>
                 <span>Plan &amp; billing</span>
@@ -341,20 +345,131 @@
           <section class="panel current-plan-panel">
             <div class="current-plan-info">
               <span class="panel-eyebrow">Current plan</span>
-              <h2>Pro — $49/mo</h2>
-              <p>Renews Oct 9, 2026 · 2× daily sync · Slack/Discord webhooks</p>
+              <h2 id="currentPlanHeading">—</h2>
+              <p id="currentPlanSub">—</p>
             </div>
             <div class="current-plan-usage">
               <div class="usage-row">
                 <div class="usage-row-label"><span>Tracked SKUs</span><span id="usageSkuLabel">—</span></div>
                 <div class="plan-meter"><div class="plan-meter-fill" id="usageSkuFill"></div></div>
               </div>
-              <p class="usage-note">Over the 800-SKU limit adds $10 per additional 200 cards, billed automatically.</p>
+              <p class="usage-note" id="usageNote">—</p>
             </div>
             <button class="btn btn-secondary" type="button">Manage billing</button>
           </section>
 
-          <div class="pricing-grid" id="pricingGrid"></div>
+          <section class="panel plan-slider-panel">
+            <div class="panel-head">
+              <h2>Choose your plan</h2>
+              <span class="panel-note">Drag to size your plan to your card count</span>
+            </div>
+
+            <div class="plan-readout">
+              <span class="plan-readout-price mono" id="planReadoutPrice">—</span>
+              <span class="plan-readout-limit" id="planReadoutLimit">—</span>
+            </div>
+
+            <div class="plan-slider-track-wrap">
+              <input type="range" class="plan-slider" id="planSlider" min="0" max="8" step="1" value="7" aria-label="Plan tier, by card capacity">
+              <div class="plan-slider-ticks" id="planSliderTicks"></div>
+            </div>
+
+            <ul class="pricing-features plan-slider-features">
+              <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Live eBay sold-price sync</span></li>
+              <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Price-opportunity &amp; margin-loss alerts</span></li>
+              <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Email, Slack &amp; Discord delivery</span></li>
+            </ul>
+
+            <div class="plan-slider-footer">
+              <span class="plan-slider-hint">Every plan tracks all your cards — pick the tier that matches how many you're listing.</span>
+              <button class="btn btn-primary" id="planSwitchBtn" type="button">—</button>
+            </div>
+          </section>
+        </section>
+
+        <!-- ---------- ACCOUNT SETTINGS ---------- -->
+        <section class="tab-panel" id="tab-settings">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Business registration</h2>
+              <span class="panel-note">Used on invoices and tax documents</span>
+            </div>
+            <form class="settings-form" id="registrationForm">
+              <div class="form-row">
+                <label class="form-field">Legal business name<input type="text" id="regBusinessName" value="Vintage Vault Cards LLC" required></label>
+                <label class="form-field">Tax / VAT ID<input type="text" id="regTaxId" value="US-84-3021557" required></label>
+              </div>
+              <div class="form-row">
+                <label class="form-field">Business address<input type="text" id="regAddress" value="221 Baker Street, Suite 4B, Chicago, IL" required></label>
+                <label class="form-field">Country
+                  <select id="regCountry">
+                    <option value="US" selected>United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="AU">Australia</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="IT">Italy</option>
+                    <option value="JP">Japan</option>
+                  </select>
+                </label>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save registration details</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Account details</h2>
+              <span class="panel-note">Your personal profile on this store</span>
+            </div>
+            <form class="settings-form" id="accountForm">
+              <div class="form-row">
+                <label class="form-field">Full name<input type="text" id="acctName" value="Riccardo Dana" required></label>
+                <label class="form-field">Email<input type="email" id="acctEmail" value="riccardo@vintage-vault.com" required></label>
+              </div>
+              <div class="form-row">
+                <label class="form-field">Role<input type="text" id="acctRole" value="Store owner" disabled></label>
+                <label class="form-field">Store<input type="text" id="acctStore" value="vintage-vault.myshopify.com" disabled></label>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save account details</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Password</h2>
+              <span class="panel-note">Update the password used to sign in</span>
+            </div>
+            <form class="settings-form" id="passwordForm">
+              <div class="form-row">
+                <label class="form-field">Current password<input type="password" id="pwCurrent" placeholder="••••••••" required></label>
+              </div>
+              <div class="form-row">
+                <label class="form-field">New password<input type="password" id="pwNew" placeholder="At least 8 characters" minlength="8" required></label>
+                <label class="form-field">Confirm new password<input type="password" id="pwConfirm" placeholder="Repeat new password" required></label>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Update password</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Currency</h2>
+              <span class="panel-note">How prices are displayed across your dashboard</span>
+            </div>
+            <div class="settings-form">
+              <label class="form-field" style="max-width: 300px;">Display currency
+                <select id="currencySelect"></select>
+              </label>
+            </div>
+          </section>
         </section>
 
       </main>
@@ -384,8 +499,8 @@
         </div>
         <div class="form-row three">
           <label class="form-field">Qty in stock<input type="number" id="editQty" min="0" step="1" required></label>
-          <label class="form-field">Cost ($)<input type="number" id="editCost" min="0" step="0.01" required></label>
-          <label class="form-field">Retail ($)<input type="number" id="editRetail" min="0" step="0.01" required></label>
+          <label class="form-field"><span>Cost (<span id="editCostUnit">$</span>)</span><input type="number" id="editCost" min="0" step="0.01" required></label>
+          <label class="form-field"><span>Retail (<span id="editRetailUnit">$</span>)</span><input type="number" id="editRetail" min="0" step="0.01" required></label>
         </div>
         <p class="modal-note">Market median price syncs from eBay and can't be edited directly — use "Sync now" or a card's refresh button to update it.</p>
         <div class="modal-actions">

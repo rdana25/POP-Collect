@@ -52,13 +52,29 @@ const CARDS = [
   { id: 'kobe-138', name: 'Kobe Bryant RC #138', set: '1996 Topps Chrome · Basketball', category: 'basketball', grade: 'PSA 10', sku: 'KOBE-138-P10', mono: 'KB', qty: 1, cost: 2600, retail: 3200, median: 2500, sales: 4, lastSold: 'Sep 7', history: [3050, 2950, 2820, 2700, 2610, 2550, 2500] },
 ];
 
+// Draggable plan slider: card capacity → monthly price. Index order matters —
+// the slider's native <input type="range"> value is this array's index.
 const PRICING_TIERS = [
-  { name: 'Starter', price: 19, limit: 'Up to 200 cards', freq: '1× daily sync', features: ['Email alerts', 'Basic dashboard', 'Cost & retail threshold alerts'], current: false },
-  { name: 'Pro', price: 49, limit: 'Up to 800 cards', freq: '2× daily sync', features: ['Everything in Starter', 'Slack & Discord webhooks', 'Manual price refresh'], current: true },
-  { name: 'Enterprise', price: 99, limit: 'Up to 3,000 cards', freq: 'Hourly sync', features: ['Everything in Pro', 'Priority queueing', 'Custom search rules', 'Dedicated support'], current: false },
+  { limit: 25, price: 9 },
+  { limit: 50, price: 14 },
+  { limit: 100, price: 19 },
+  { limit: 150, price: 28 },
+  { limit: 250, price: 35 },
+  { limit: 400, price: 50 },
+  { limit: 600, price: 80 },
+  { limit: 800, price: 99 },
+  { limit: 1000, price: 118 },
 ];
+const CURRENT_PLAN_INDEX_DEFAULT = PRICING_TIERS.findIndex((t) => t.limit === 800);
 
-const PLAN_LIMIT = 800;
+const CURRENCIES = {
+  USD: { label: 'US Dollar', symbol: '$', decimals: 2 },
+  EUR: { label: 'Euro', symbol: '€', decimals: 2 },
+  GBP: { label: 'British Pound', symbol: '£', decimals: 2 },
+  JPY: { label: 'Japanese Yen', symbol: '¥', decimals: 0 },
+  CAD: { label: 'Canadian Dollar', symbol: 'CA$', decimals: 2 },
+  AUD: { label: 'Australian Dollar', symbol: 'AU$', decimals: 2 },
+};
 
 /* ------------------------------- STATE ------------------------------------ */
 
@@ -73,6 +89,9 @@ const state = {
   reviewed: new Set(),
   minutesSinceSync: 4,
   syncing: false,
+  currency: 'USD',
+  planIndex: CURRENT_PLAN_INDEX_DEFAULT,
+  currentPlanIndex: CURRENT_PLAN_INDEX_DEFAULT,
 };
 
 const activityLog = [
@@ -92,7 +111,13 @@ const syncLog = [
 
 /* ---------------------------- CALC HELPERS --------------------------------- */
 
-const money = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const moneyStr = (n, decimals) => n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+// fmt: itemized monetary values (card prices, cost, retail, alert math) — respects the
+// selected currency's normal decimal precision (e.g. 2 for USD, 0 for JPY).
+const fmt = (n) => `${CURRENCIES[state.currency].symbol}${moneyStr(n, CURRENCIES[state.currency].decimals)}`;
+// fmtWhole: rounded headline figures (KPI totals, plan prices) — always whole numbers,
+// regardless of currency, since these are display totals rather than exact prices.
+const fmtWhole = (n) => `${CURRENCIES[state.currency].symbol}${moneyStr(Math.round(n), 0)}`;
 const pct = (n) => `${n > 0 ? '+' : ''}${n.toFixed(1)}%`;
 const getStatus = (c) => (c.median > c.retail ? 'gain' : c.median <= c.cost ? 'risk' : 'stable');
 const deltaPct = (c) => ((c.median - c.retail) / c.retail) * 100;
@@ -138,13 +163,13 @@ function rangeGauge(card, status) {
   return `<div class="range-gauge">
     <div class="range-track">
       ${zone}
-      <span class="range-tick" style="left:${costPct}%" title="Cost $${money(card.cost)}"></span>
-      <span class="range-tick" style="left:${retailPct}%" title="Retail $${money(card.retail)}"></span>
-      <span class="range-dot ${dotClass}" style="left:${medianPct}%" title="Market median $${money(card.median)}"></span>
+      <span class="range-tick" style="left:${costPct}%" title="Cost ${fmt(card.cost)}"></span>
+      <span class="range-tick" style="left:${retailPct}%" title="Retail ${fmt(card.retail)}"></span>
+      <span class="range-dot ${dotClass}" style="left:${medianPct}%" title="Market median ${fmt(card.median)}"></span>
     </div>
     <div class="range-labels">
-      <span>Cost <b>$${money(card.cost)}</b></span>
-      <span>Retail <b>$${money(card.retail)}</b></span>
+      <span>Cost <b>${fmt(card.cost)}</b></span>
+      <span>Retail <b>${fmt(card.retail)}</b></span>
     </div>
   </div>`;
 }
@@ -183,7 +208,7 @@ function cardTileHTML(card) {
       <div>
         <span class="field-label">Market median</span>
         <div class="card-price-row">
-          <span class="card-price mono">$${money(card.median)}</span>
+          <span class="card-price mono">${fmt(card.median)}</span>
           <span class="card-delta ${meta.deltaClass}">${meta.icon(11)}${pct(d)}</span>
         </div>
       </div>
@@ -217,9 +242,9 @@ function listRowHTML(card) {
       <span class="t-symbol">$${card.sku}</span>
       <span class="list-spark">${sparkline(card.history, `var(--${meta.deltaClass === 'good' ? 'good' : meta.deltaClass === 'critical' ? 'critical' : 'neutral'}-500)`, 44, 16)}</span>
     </div>
-    <span class="mono-cell">$${money(card.median)}</span>
-    <span class="mono-cell list-col-retail">$${money(card.retail)}</span>
-    <span class="mono-cell list-col-cost">$${money(card.cost)}</span>
+    <span class="mono-cell">${fmt(card.median)}</span>
+    <span class="mono-cell list-col-retail">${fmt(card.retail)}</span>
+    <span class="mono-cell list-col-cost">${fmt(card.cost)}</span>
     <span class="mono-cell">${marketMarginPct(card).toFixed(0)}%</span>
     <span class="delta-cell ${meta.deltaClass}">${meta.icon(11)}${pct(d)}</span>
     <span><span class="status-pill ${meta.pillClass}">${meta.label}</span></span>
@@ -237,7 +262,7 @@ function tickerChipHTML(card) {
   return `
   <button class="ticker-chip" data-goto="${card.id}" type="button">
     <span class="t-symbol">$${card.sku}</span>
-    <span class="t-price mono">$${money(card.median)}</span>
+    <span class="t-price mono">${fmt(card.median)}</span>
     <span class="t-delta ${meta.deltaClass}">${meta.icon(10)}${pct(d)}</span>
   </button>`;
 }
@@ -254,7 +279,7 @@ function attentionRowHTML(card) {
       <span class="attention-sub">${meta.flagLabel} · ${card.set.split('·')[0].trim()}</span>
     </span>
     <span class="attention-value">
-      <span class="attention-price mono">$${money(card.median)}</span>
+      <span class="attention-price mono">${fmt(card.median)}</span>
       <span class="attention-pct ${meta.deltaClass}">${pct(d)}</span>
     </span>
   </button>`;
@@ -275,13 +300,13 @@ function alertCardHTML(card) {
     body = `
       <div class="alert-math">
         <p class="alert-math-explain">
-          Your last <b>${card.sales} eBay sales</b> settled at a median of <b>$${money(card.median)}</b> —
-          <b>${pct(d)}</b> above your current <b>$${money(card.retail)}</b> retail price. Demand is running ahead of your price.
+          Your last <b>${card.sales} eBay sales</b> settled at a median of <b>${fmt(card.median)}</b> —
+          <b>${pct(d)}</b> above your current <b>${fmt(card.retail)}</b> retail price. Demand is running ahead of your price.
         </p>
         <div class="alert-math-figures">
-          <div class="alert-math-figure"><span>Reprice to</span><b>$${money(m.suggested)}</b></div>
-          <div class="alert-math-figure"><span>Price increase</span><b class="good">+$${money(Math.abs(m.priceDelta))} · ${pct(m.pctDelta)}</b></div>
-          <div class="alert-math-figure"><span>Extra profit${card.qty > 1 ? ` · ${card.qty} in stock` : ' per card'}</span><b class="good">+$${money(m.extraTotal)}</b></div>
+          <div class="alert-math-figure"><span>Reprice to</span><b>${fmt(m.suggested)}</b></div>
+          <div class="alert-math-figure"><span>Price increase</span><b class="good">+${fmt(Math.abs(m.priceDelta))} · ${pct(m.pctDelta)}</b></div>
+          <div class="alert-math-figure"><span>Extra profit${card.qty > 1 ? ` · ${card.qty} in stock` : ' per card'}</span><b class="good">+${fmt(m.extraTotal)}</b></div>
         </div>
       </div>`;
   } else {
@@ -299,8 +324,8 @@ function alertCardHTML(card) {
       <div class="alert-card-name">${card.name} <span style="color:var(--ink-400); font-weight:500;">· ${card.grade}</span></div>
       <div class="alert-card-set">${card.set} · $${card.sku}</div>
       <div class="alert-figures">
-        <div class="alert-figure"><span>eBay sold median</span><span>$${money(card.median)}</span></div>
-        <div class="alert-figure"><span>${compareLabel}</span><span>$${money(compareValue)}</span></div>
+        <div class="alert-figure"><span>eBay sold median</span><span>${fmt(card.median)}</span></div>
+        <div class="alert-figure"><span>${compareLabel}</span><span>${fmt(compareValue)}</span></div>
         <div class="alert-figure"><span>Δ vs retail</span><span class="${meta.deltaClass}">${pct(d)}</span></div>
       </div>
       ${body}
@@ -316,6 +341,7 @@ function alertCardHTML(card) {
 
 function renderKPIs() {
   const total = CARDS.length;
+  const limit = PRICING_TIERS[state.currentPlanIndex].limit;
   const portfolioValue = CARDS.reduce((s, c) => s + marketValue(c), 0);
   const retailValue = CARDS.reduce((s, c) => s + c.retail * c.qty, 0);
   const avgMargin = CARDS.reduce((s, c) => s + marketMarginPct(c), 0) / total;
@@ -326,14 +352,14 @@ function renderKPIs() {
   const tiles = [
     {
       label: 'Tracked SKUs', icon: ICONS.grid(15), iconBg: 'var(--accent-soft)', iconColor: 'var(--accent-ink)',
-      value: `${total} <span style="font-size:15px;color:var(--ink-400);font-weight:500;">/ ${PLAN_LIMIT}</span>`,
-      sub: `<div class="kpi-foot-meter"><div class="kpi-foot-meter-fill" style="width:${Math.max(2, (total / PLAN_LIMIT) * 100)}%"></div></div>`,
+      value: `${total} <span style="font-size:15px;color:var(--ink-400);font-weight:500;">/ ${limit.toLocaleString('en-US')}</span>`,
+      sub: `<div class="kpi-foot-meter"><div class="kpi-foot-meter-fill" style="width:${Math.max(2, (total / limit) * 100)}%"></div></div>`,
       subClass: '',
     },
     {
       label: 'Portfolio market value', icon: ICONS.dollar(15), iconBg: 'var(--accent-soft)', iconColor: 'var(--accent-ink)',
-      value: `$${Math.round(portfolioValue).toLocaleString('en-US')}`,
-      sub: `${valueUp ? ICONS.up(11) : ICONS.down(11)} $${Math.round(retailValue).toLocaleString('en-US')} at retail`,
+      value: fmtWhole(portfolioValue),
+      sub: `${valueUp ? ICONS.up(11) : ICONS.down(11)} ${fmtWhole(retailValue)} at retail`,
       subClass: valueUp ? 'good' : 'critical',
     },
     {
@@ -392,20 +418,39 @@ function renderSyncLogList() {
     </div>`).join('');
 }
 
-function renderPricing() {
-  document.getElementById('pricingGrid').innerHTML = PRICING_TIERS.map((tier) => `
-    <div class="pricing-card ${tier.current ? 'is-current' : ''}">
-      ${tier.current ? '<span class="pricing-current-tag">Current plan</span>' : ''}
-      <span class="pricing-tier">${tier.name}</span>
-      <div class="pricing-price mono">$${tier.price}<span>/mo</span></div>
-      <div class="pricing-limit">${tier.limit} · ${tier.freq}</div>
-      <ul class="pricing-features">
-        ${tier.features.map((f) => `<li>${ICONS.check(14)}<span>${f}</span></li>`).join('')}
-      </ul>
-      <button class="btn ${tier.current ? 'btn-secondary' : 'btn-primary'}" type="button" data-plan-select="${tier.name}" ${tier.current ? 'disabled' : ''}>
-        ${tier.current ? 'Current plan' : `Switch to ${tier.name}`}
-      </button>
-    </div>`).join('');
+function renderPlanSliderTicks() {
+  document.getElementById('planSliderTicks').innerHTML = PRICING_TIERS.map((tier, i) => `
+    <span class="plan-slider-tick" data-idx="${i}">${tier.limit.toLocaleString('en-US')}${i === state.currentPlanIndex ? '<span class="tick-current-dot" title="Your current plan"></span>' : ''}</span>
+  `).join('');
+}
+
+function renderPlanSlider() {
+  const idx = state.planIndex;
+  const tier = PRICING_TIERS[idx];
+  const slider = document.getElementById('planSlider');
+  slider.value = idx;
+  slider.style.setProperty('--fill', `${(idx / (PRICING_TIERS.length - 1)) * 100}%`);
+
+  document.getElementById('planReadoutPrice').innerHTML = `${fmtWhole(tier.price)}<span>/mo</span>`;
+  document.getElementById('planReadoutLimit').innerHTML = `Up to <b>${tier.limit.toLocaleString('en-US')}</b> cards tracked`;
+
+  document.querySelectorAll('.plan-slider-tick').forEach((el) => {
+    el.classList.toggle('is-active', Number(el.dataset.idx) === idx);
+  });
+
+  const switchBtn = document.getElementById('planSwitchBtn');
+  const isCurrent = idx === state.currentPlanIndex;
+  switchBtn.textContent = isCurrent ? 'Current plan' : `Switch to this plan — ${fmtWhole(tier.price)}/mo`;
+  switchBtn.disabled = isCurrent;
+  switchBtn.classList.toggle('btn-secondary', isCurrent);
+  switchBtn.classList.toggle('btn-primary', !isCurrent);
+}
+
+function updateBillingPanel() {
+  const tier = PRICING_TIERS[state.currentPlanIndex];
+  document.getElementById('currentPlanHeading').textContent = `${tier.limit.toLocaleString('en-US')}-card plan — ${fmtWhole(tier.price)}/mo`;
+  document.getElementById('currentPlanSub').textContent = 'Renews Oct 9, 2026 · Email, Slack & Discord alerts included';
+  document.getElementById('usageNote').textContent = `Need to track more than ${tier.limit.toLocaleString('en-US')} cards? Drag the slider below to move to a bigger plan.`;
 }
 
 function getFilteredSortedCards() {
@@ -476,6 +521,9 @@ function openEditModal(id) {
   document.getElementById('editQty').value = card.qty;
   document.getElementById('editCost').value = card.cost;
   document.getElementById('editRetail').value = card.retail;
+  const symbol = CURRENCIES[state.currency].symbol;
+  document.getElementById('editCostUnit').textContent = symbol;
+  document.getElementById('editRetailUnit').textContent = symbol;
   document.getElementById('editModalBackdrop').hidden = false;
   document.getElementById('editName').focus();
 }
@@ -523,7 +571,7 @@ function sheetRowHTML(card, index) {
     <td><input type="number" min="0" step="1" value="${card.qty}" data-field="qty" data-id="${card.id}"></td>
     <td><input type="number" min="0" step="0.01" value="${card.cost}" data-field="cost" data-id="${card.id}"></td>
     <td><input type="number" min="0" step="0.01" value="${card.retail}" data-field="retail" data-id="${card.id}"></td>
-    <td class="readonly mono sheet-median">$${money(card.median)}</td>
+    <td class="readonly mono sheet-median">${fmt(card.median)}</td>
     <td class="readonly mono sheet-margin">${marketMarginPct(card).toFixed(0)}%</td>
     <td class="readonly sheet-status"><span class="status-pill ${meta.pillClass}">${meta.label}</span></td>
   </tr>`;
@@ -537,7 +585,7 @@ function updateSheetRowComputed(card) {
   const row = document.querySelector(`#sheetBody tr[data-id="${card.id}"]`);
   if (!row) return;
   const meta = STATUS_META[getStatus(card)];
-  row.querySelector('.sheet-median').textContent = `$${money(card.median)}`;
+  row.querySelector('.sheet-median').textContent = `${fmt(card.median)}`;
   row.querySelector('.sheet-margin').textContent = `${marketMarginPct(card).toFixed(0)}%`;
   row.querySelector('.sheet-status').innerHTML = `<span class="status-pill ${meta.pillClass}">${meta.label}</span>`;
 }
@@ -588,11 +636,12 @@ function updateNavBadges() {
 }
 
 function updatePlanWidgets() {
-  const usedPct = Math.max(2, (CARDS.length / PLAN_LIMIT) * 100);
+  const limit = PRICING_TIERS[state.currentPlanIndex].limit;
+  const usedPct = Math.max(2, (CARDS.length / limit) * 100);
   document.getElementById('planMeterFill').style.width = `${usedPct}%`;
-  document.getElementById('planMeterLabel').textContent = `${CARDS.length} of ${PLAN_LIMIT} SKUs tracked`;
+  document.getElementById('planMeterLabel').textContent = `${CARDS.length} of ${limit.toLocaleString('en-US')} SKUs tracked`;
   document.getElementById('usageSkuFill').style.width = `${usedPct}%`;
-  document.getElementById('usageSkuLabel').textContent = `${CARDS.length} / ${PLAN_LIMIT}`;
+  document.getElementById('usageSkuLabel').textContent = `${CARDS.length} / ${limit.toLocaleString('en-US')}`;
   document.getElementById('metaMapped').textContent = `${CARDS.length} products`;
 }
 
@@ -618,6 +667,7 @@ const TAB_META = {
   alerts: { title: 'Alerts', subtitle: 'Price opportunities and margin warnings from your latest sync.' },
   sync: { title: 'Sync & integrations', subtitle: 'Manage your Shopify and eBay connections and alert destinations.' },
   billing: { title: 'Plan & billing', subtitle: 'Manage your subscription, usage, and plan limits.' },
+  settings: { title: 'Account settings', subtitle: 'Manage your registration details, profile, password, and currency.' },
 };
 
 function setActiveTab(tab) {
@@ -627,7 +677,7 @@ function setActiveTab(tab) {
   document.querySelectorAll('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
   document.getElementById('pageTitle').textContent = TAB_META[tab].title;
   document.getElementById('pageSubtitle').textContent = TAB_META[tab].subtitle;
-  document.getElementById('avatarBtn').classList.toggle('is-active', tab === 'billing');
+  document.getElementById('avatarBtn').classList.toggle('is-active', tab === 'billing' || tab === 'settings');
   if (tab === 'alerts') { document.getElementById('notifDot').style.display = 'none'; }
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
@@ -704,7 +754,7 @@ function handleCardRefresh(id, btnEl) {
   setTimeout(() => {
     driftCard(card);
     renderAll();
-    showToast(`Refreshed $${card.sku} — market median now $${money(card.median)}`);
+    showToast(`Refreshed $${card.sku} — market median now ${fmt(card.median)}`);
   }, 650);
 }
 
@@ -713,6 +763,13 @@ function handleCardRefresh(id, btnEl) {
 function populateCategoryFilter() {
   populateSelect(document.getElementById('filterCategory'), true);
   populateSelect(document.getElementById('editCategory'), false);
+}
+
+function populateCurrencySelect() {
+  const select = document.getElementById('currencySelect');
+  select.innerHTML = Object.entries(CURRENCIES)
+    .map(([code, c]) => `<option value="${code}" ${code === state.currency ? 'selected' : ''}>${c.label} (${c.symbol}) — ${code}</option>`)
+    .join('');
 }
 
 function bindEvents() {
@@ -864,22 +921,72 @@ function bindEvents() {
     if (sw && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); sw.click(); }
   });
 
-  // billing
-  document.getElementById('pricingGrid').addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-plan-select]');
-    if (btn && !btn.disabled) showToast(`Redirecting to Shopify's confirmation page to switch to ${btn.dataset.planSelect}…`);
+  // billing — draggable plan slider
+  document.getElementById('planSlider').addEventListener('input', (e) => {
+    state.planIndex = parseInt(e.target.value, 10);
+    renderPlanSlider();
+  });
+  document.getElementById('planSwitchBtn').addEventListener('click', () => {
+    if (state.planIndex === state.currentPlanIndex) return;
+    state.currentPlanIndex = state.planIndex;
+    updateBillingPanel();
+    updatePlanWidgets();
+    renderKPIs();
+    renderPlanSliderTicks();
+    renderPlanSlider();
+    const tier = PRICING_TIERS[state.currentPlanIndex];
+    showToast(`Switched to the ${tier.limit.toLocaleString('en-US')}-card plan — ${fmtWhole(tier.price)}/mo.`);
   });
   document.querySelector('.current-plan-panel .btn').addEventListener('click', () => showToast("Opening Shopify's subscription management page…"));
+
+  // account settings
+  document.getElementById('registrationForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    showToast('Saved business registration details.');
+  });
+  document.getElementById('accountForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('acctName').value.trim();
+    const email = document.getElementById('acctEmail').value.trim();
+    if (name) {
+      document.querySelector('.account-name').textContent = name;
+      const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || 'RD';
+      document.querySelectorAll('.avatar').forEach((el) => { el.textContent = initials; });
+    }
+    if (email) document.querySelector('.account-email').textContent = email;
+    showToast('Saved account details.');
+  });
+  document.getElementById('passwordForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const newPw = document.getElementById('pwNew').value;
+    const confirmPw = document.getElementById('pwConfirm').value;
+    if (newPw !== confirmPw) { showToast("New password and confirmation don't match."); return; }
+    if (newPw.length < 8) { showToast('Use at least 8 characters for your new password.'); return; }
+    form.reset();
+    showToast('Password updated.');
+  });
+  document.getElementById('currencySelect').addEventListener('change', (e) => {
+    state.currency = e.target.value;
+    renderAll();
+    renderPlanSlider();
+    updateBillingPanel();
+    const c = CURRENCIES[state.currency];
+    showToast(`Prices now shown in ${c.label} (${c.symbol}).`);
+  });
 }
 
 /* --------------------------------- INIT -------------------------------------- */
 
 function init() {
   populateCategoryFilter();
+  populateCurrencySelect();
   bindEvents();
   renderActivityList();
   renderSyncLogList();
-  renderPricing();
+  renderPlanSliderTicks();
+  renderPlanSlider();
+  updateBillingPanel();
   renderAll();
   updateSyncPill();
   setInterval(() => { state.minutesSinceSync++; updateSyncPill(); }, 60000);

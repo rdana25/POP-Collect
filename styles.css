@@ -852,18 +852,72 @@ a { color: inherit; text-decoration: none; }
 .usage-row-label span:last-child { font-family: var(--font-mono); font-weight: 600; color: var(--ink-900); }
 .usage-note { font-size: 11.5px; color: var(--ink-400); margin-top: 8px; }
 
-.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.pricing-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px 20px; display: flex; flex-direction: column; gap: 14px; position: relative; }
-.pricing-card.is-current { border-color: var(--accent-500); box-shadow: 0 0 0 3px var(--accent-ring); }
-.pricing-current-tag { position: absolute; top: -11px; left: 20px; background: var(--accent-500); color: #fff; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
-.pricing-tier { font-size: 15px; font-weight: 600; font-family: var(--font-display); }
-.pricing-price { font-size: 30px; font-weight: 700; font-family: var(--font-display); }
-.pricing-price span { font-size: 13px; font-weight: 500; color: var(--ink-400); }
-.pricing-limit { font-size: 12.5px; color: var(--ink-400); }
 .pricing-features { display: flex; flex-direction: column; gap: 9px; }
 .pricing-features li { display: flex; gap: 8px; font-size: 12.5px; color: var(--ink-700); align-items: flex-start; }
 .pricing-features li svg { color: var(--good-500); flex-shrink: 0; margin-top: 2px; }
-.pricing-card .btn { margin-top: auto; justify-content: center; }
+
+/* -------------------------- draggable plan slider ------------------------- */
+
+.plan-slider-panel { padding-top: 22px; padding-bottom: 24px; }
+.plan-readout { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.plan-readout-price { font-family: var(--font-display); font-size: 36px; font-weight: 700; letter-spacing: -0.01em; }
+.plan-readout-price span { font-size: 14px; font-weight: 500; color: var(--ink-400); }
+.plan-readout-limit { font-size: 13.5px; font-weight: 600; color: var(--ink-600); }
+.plan-readout-limit b { font-family: var(--font-mono); color: var(--ink-900); }
+
+.plan-slider-track-wrap { padding: 0 2px; margin-bottom: 22px; }
+.plan-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 20px;
+  background: linear-gradient(to right, var(--accent-500) var(--fill, 87%), var(--border) var(--fill, 87%));
+  outline: none;
+  cursor: pointer;
+  margin: 12px 0 0;
+}
+.plan-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--accent-500);
+  box-shadow: var(--shadow-md);
+  cursor: grab;
+}
+.plan-slider::-webkit-slider-thumb:active { cursor: grabbing; }
+.plan-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--accent-500);
+  box-shadow: var(--shadow-md);
+  cursor: grab;
+}
+.plan-slider::-moz-range-track { height: 6px; border-radius: 20px; background: var(--border); }
+.plan-slider::-moz-range-progress { height: 6px; border-radius: 20px; background: var(--accent-500); }
+.plan-slider:focus-visible { outline: 2px solid var(--accent-500); outline-offset: 4px; }
+
+.plan-slider-ticks { display: flex; justify-content: space-between; margin-top: 12px; }
+.plan-slider-tick { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-400); text-align: center; flex: 1; position: relative; }
+.plan-slider-tick.is-active { color: var(--accent-600); font-weight: 700; }
+.plan-slider-tick .tick-current-dot { display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--ink-300); margin: 5px auto 0; }
+
+.plan-slider-features { margin: 20px 2px 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+.plan-slider-features li { color: var(--ink-600); }
+
+.plan-slider-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.plan-slider-hint { font-size: 12px; color: var(--ink-400); max-width: 360px; }
+
+/* ============================ ACCOUNT SETTINGS ============================= */
+
+.settings-form { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
+.settings-form .form-field input:disabled { color: var(--ink-400); background: var(--surface-sunken); cursor: not-allowed; }
+.form-actions { display: flex; justify-content: flex-start; margin-top: 2px; }
 
 /* ============================== TOAST =============================== */
 
@@ -942,7 +996,6 @@ a { color: inherit; text-decoration: none; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .overview-split { grid-template-columns: 1fr; }
   .connections-grid { grid-template-columns: 1fr; }
-  .pricing-grid { grid-template-columns: 1fr; }
   .card-list-head, .list-row { grid-template-columns: 1.6fr 0.9fr 1fr 0.8fr 0.8fr 0.9fr 1fr 64px; }
   .list-col-cost, .list-col-synced { display: none; }
 }
