@@ -5,54 +5,54 @@
    ========================================================================= */
 
 :root {
-  /* canvas & surfaces — one dark blue system, three depths */
-  --bg-canvas: #0D1326;
-  --surface: #141C33;
-  --surface-sunken: #0F1628;
-  --border: #212B48;
-  --border-strong: #34426A;
+  /* canvas & surfaces — one white system, three depths */
+  --bg-canvas: #F6F7FB;
+  --surface: #FFFFFF;
+  --surface-sunken: #F1F3F8;
+  --border: #E4E7F0;
+  --border-strong: #D3D8E6;
 
-  /* ink — light text on dark */
-  --ink-900: #F2F5FC;
-  --ink-700: #C7CFE2;
-  --ink-600: #9CA6C0;
-  --ink-400: #7A85A3;
-  --ink-300: #454F6B;
+  /* ink — dark text on white */
+  --ink-900: #10131C;
+  --ink-700: #333949;
+  --ink-600: #545B6C;
+  --ink-400: #8B93A6;
+  --ink-300: #C3C9D6;
 
-  /* sidebar — the darkest layer, anchors the rest */
-  --rail-bg: #080C18;
-  --rail-bg-raised: #111A30;
-  --rail-border: #1C263F;
-  --rail-ink: #E9EAF2;
-  --rail-ink-dim: #838DAC;
+  /* sidebar — white too, separated from canvas by a hairline border only */
+  --rail-bg: #FFFFFF;
+  --rail-bg-raised: #F3F4F9;
+  --rail-border: #E7E9F2;
+  --rail-ink: #10131C;
+  --rail-ink-dim: #6B7280;
 
   /* brand accent */
   --accent-600: #4338CA;
   --accent-500: #4F46E5;
   --accent-400: #6D67F0;
-  --accent-ink: #A5B4FC;
-  --accent-soft: rgba(99, 102, 241, 0.18);
-  --accent-ring: rgba(99, 102, 241, 0.4);
+  --accent-ink: #4338CA;
+  --accent-soft: rgba(79, 70, 229, 0.09);
+  --accent-ring: rgba(79, 70, 229, 0.3);
   --foil-a: #4F46E5;
   --foil-b: #06B6D4;
 
-  /* status — reserved, never reused for categorical data. Bright shades
-     tuned for text/icons on this dark surface; the two "on-light" variants
-     back the status-flag chip, which stays a fixed pale pill on every card
-     thumbnail regardless of page theme. */
-  --good-600: #34D399;
-  --good-500: #22C55E;
-  --good-soft: rgba(52, 211, 153, 0.16);
+  /* status — reserved, never reused for categorical data. The two
+     "on-light" variants back the status-flag chip, which stays a fixed
+     pale pill on every card thumbnail regardless of page theme; on this
+     white canvas they match the general text shades below. */
+  --good-600: #15803D;
+  --good-500: #16A34A;
+  --good-soft: #E9FAEF;
   --good-on-light: #15803D;
-  --critical-600: #F87171;
-  --critical-500: #EF4444;
-  --critical-soft: rgba(248, 113, 113, 0.16);
+  --critical-600: #B91C1C;
+  --critical-500: #DC2626;
+  --critical-soft: #FDECEC;
   --critical-on-light: #B91C1C;
-  --neutral-600: #A3AFCB;
-  --neutral-500: #8993B3;
-  --neutral-soft: rgba(148, 163, 184, 0.14);
+  --neutral-600: #475569;
+  --neutral-500: #64748B;
+  --neutral-soft: #EEF1F5;
   --neutral-on-light: #475569;
-  --overlay-bg: #1B2547;
+  --overlay-bg: #151A2B;
 
   /* category texture (decorative thumbnail identity only, never status) */
   --cat-pokemon-1: #4F46E5;
@@ -79,7 +79,7 @@
 }
 
 * { box-sizing: border-box; }
-html { color-scheme: dark; }
+html { color-scheme: light; }
 body {
   margin: 0;
   background: var(--bg-canvas);
@@ -162,7 +162,7 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 18px;
   transition: border-color .15s ease, background .15s ease;
 }
-.store-switcher:hover { border-color: #333846; background: #171a23; }
+.store-switcher:hover { border-color: var(--border-strong); background: var(--rail-bg-raised); }
 .store-icon { color: var(--rail-ink-dim); flex-shrink: 0; }
 .store-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .store-name { font-size: 13px; font-weight: 600; color: var(--rail-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -194,7 +194,7 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: var(--rail-ink-dim);
-  background: rgba(255,255,255,0.06);
+  background: var(--rail-bg-raised);
   padding: 1px 6px;
   border-radius: 20px;
 }
@@ -217,7 +217,7 @@ a { color: inherit; text-decoration: none; }
 .sidebar-footer { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--rail-border); }
 
 .plan-widget { background: var(--rail-bg-raised); border: 1px solid var(--rail-border); border-radius: var(--radius-md); padding: 11px 12px; }
-.plan-meter { height: 5px; border-radius: 20px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.plan-meter { height: 5px; border-radius: 20px; background: var(--border); overflow: hidden; }
 .plan-meter-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--foil-a), var(--foil-b)); width: 0%; transition: width .5s ease; }
 .plan-meter-label { display: block; margin-top: 7px; font-size: 11px; color: var(--rail-ink-dim); font-family: var(--font-mono); }
 
@@ -494,7 +494,7 @@ a { color: inherit; text-decoration: none; }
   color: var(--ink-700);
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%239CA6C0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%238B93A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
 }
