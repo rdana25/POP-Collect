@@ -1029,4 +1029,33 @@ a { color: inherit; text-decoration: none; }
   .topbar-actions .search { display: none; }
   .form-row, .form-row.three { grid-template-columns: 1fr; }
   .sheet-toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+
+  /* Mobile inventory: hide list view, simplify grid */
+  #viewGridBtn, #viewListBtn { display: none; }
+  #cardGrid { display: grid !important; }
+  #cardList { display: none !important; }
+  .card-grid { grid-template-columns: 1fr; }
+  .card-tile { padding: 12px; }
+  .card-tile.is-editing { padding: 14px; }
+  .card-art { height: 100px; }
+  .card-art-mono { font-size: 32px; }
+  .card-heading { margin-bottom: 8px; }
+  .card-name { font-size: 14px; }
+  .card-set { font-size: 10px; }
+  .card-ticker-row { margin-bottom: 6px; }
+  .card-spark { height: 20px; }
+  .card-price { font-size: 16px; }
+  .card-lastsold { font-size: 10px; }
+  .card-pnl { padding: 6px 8px; font-size: 10px; }
+  .card-pnl span { font-size: 9px; }
+  .card-pnl b { font-size: 12px; }
+  .card-foot { padding-top: 8px; gap: 8px; }
+  .card-foot-meta { font-size: 10px; }
+  .card-foot-btn { font-size: 10px; padding: 3px 4px; }
+  .range-gauge { padding-top: 1px; }
+  .range-labels { margin-top: 6px; font-size: 9px; }
+
+  .card-edit-fields { gap: 10px; }
+  .card-edit-fields .form-field { gap: 3px; font-size: 11px; }
+  .card-edit-fields .form-field input, .card-edit-fields .form-field select { padding: 7px 9px; font-size: 12px; }
 }
