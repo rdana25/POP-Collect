@@ -289,19 +289,19 @@ function renderKPIs() {
 
   const tiles = [
     {
-      label: 'Tracked SKUs', icon: ICONS.grid(15), iconBg: 'var(--accent-soft)', iconColor: 'var(--accent-600)',
+      label: 'Tracked SKUs', icon: ICONS.grid(15), iconBg: 'var(--accent-soft)', iconColor: 'var(--accent-ink)',
       value: `${total} <span style="font-size:15px;color:var(--ink-400);font-weight:500;">/ ${PLAN_LIMIT}</span>`,
       sub: `<div class="kpi-foot-meter"><div class="kpi-foot-meter-fill" style="width:${Math.max(2, (total / PLAN_LIMIT) * 100)}%"></div></div>`,
       subClass: '',
     },
     {
-      label: 'Portfolio market value', icon: ICONS.dollar(15), iconBg: 'var(--accent-soft)', iconColor: 'var(--accent-600)',
+      label: 'Portfolio market value', icon: ICONS.dollar(15), iconBg: 'var(--accent-soft)', iconColor: 'var(--accent-ink)',
       value: `$${Math.round(portfolioValue).toLocaleString('en-US')}`,
       sub: `${valueUp ? ICONS.up(11) : ICONS.down(11)} $${Math.round(retailValue).toLocaleString('en-US')} at retail`,
       subClass: valueUp ? 'good' : 'critical',
     },
     {
-      label: 'Avg. market margin', icon: ICONS.percent(15), iconBg: 'var(--accent-soft)', iconColor: 'var(--accent-600)',
+      label: 'Avg. market margin', icon: ICONS.percent(15), iconBg: 'var(--accent-soft)', iconColor: 'var(--accent-ink)',
       value: `${avgMargin.toFixed(0)}%`,
       sub: `Median across ${total} tracked cards`,
       subClass: '',

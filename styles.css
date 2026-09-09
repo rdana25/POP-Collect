@@ -5,46 +5,54 @@
    ========================================================================= */
 
 :root {
-  /* canvas & surfaces */
-  --bg-canvas: #F5F6FA;
-  --surface: #FFFFFF;
-  --surface-sunken: #FAFBFD;
-  --border: #E4E7EF;
-  --border-strong: #D2D6E2;
+  /* canvas & surfaces — one dark blue system, three depths */
+  --bg-canvas: #0D1326;
+  --surface: #141C33;
+  --surface-sunken: #0F1628;
+  --border: #212B48;
+  --border-strong: #34426A;
 
-  /* ink */
-  --ink-900: #10131C;
-  --ink-700: #333949;
-  --ink-600: #545B6C;
-  --ink-400: #8B93A6;
-  --ink-300: #B7BDCC;
+  /* ink — light text on dark */
+  --ink-900: #F2F5FC;
+  --ink-700: #C7CFE2;
+  --ink-600: #9CA6C0;
+  --ink-400: #7A85A3;
+  --ink-300: #454F6B;
 
-  /* sidebar */
-  --rail-bg: #0D0F16;
-  --rail-bg-raised: #14171F;
-  --rail-border: #22252F;
+  /* sidebar — the darkest layer, anchors the rest */
+  --rail-bg: #080C18;
+  --rail-bg-raised: #111A30;
+  --rail-border: #1C263F;
   --rail-ink: #E9EAF2;
-  --rail-ink-dim: #888EA0;
+  --rail-ink-dim: #838DAC;
 
   /* brand accent */
   --accent-600: #4338CA;
   --accent-500: #4F46E5;
   --accent-400: #6D67F0;
-  --accent-soft: #EEEEFE;
-  --accent-ring: rgba(79, 70, 229, 0.35);
+  --accent-ink: #A5B4FC;
+  --accent-soft: rgba(99, 102, 241, 0.18);
+  --accent-ring: rgba(99, 102, 241, 0.4);
   --foil-a: #4F46E5;
   --foil-b: #06B6D4;
 
-  /* status — reserved, never reused for categorical data */
-  --good-600: #15803D;
-  --good-500: #16A34A;
-  --good-soft: #E9FAEF;
-  --critical-600: #B91C1C;
-  --critical-500: #DC2626;
-  --critical-soft: #FDECEC;
-  --neutral-600: #475569;
-  --neutral-500: #64748B;
-  --neutral-soft: #EEF1F5;
+  /* status — reserved, never reused for categorical data. Bright shades
+     tuned for text/icons on this dark surface; the two "on-light" variants
+     back the status-flag chip, which stays a fixed pale pill on every card
+     thumbnail regardless of page theme. */
+  --good-600: #34D399;
+  --good-500: #22C55E;
+  --good-soft: rgba(52, 211, 153, 0.16);
+  --good-on-light: #15803D;
+  --critical-600: #F87171;
+  --critical-500: #EF4444;
+  --critical-soft: rgba(248, 113, 113, 0.16);
+  --critical-on-light: #B91C1C;
+  --neutral-600: #A3AFCB;
+  --neutral-500: #8993B3;
+  --neutral-soft: rgba(148, 163, 184, 0.14);
+  --neutral-on-light: #475569;
+  --overlay-bg: #1B2547;
 
   /* category texture (decorative thumbnail identity only, never status) */
   --cat-pokemon-1: #4F46E5;
@@ -71,7 +79,7 @@
 }
 
 * { box-sizing: border-box; }
-html { color-scheme: light; }
+html { color-scheme: dark; }
 body {
   margin: 0;
   background: var(--bg-canvas);
@@ -307,7 +315,7 @@ a { color: inherit; text-decoration: none; }
 .avatar {
   width: 36px; height: 36px; border-radius: 10px;
   display: grid; place-items: center;
-  background: var(--ink-900); color: #fff;
+  background: var(--accent-500); color: #fff;
   font-family: var(--font-display); font-weight: 600; font-size: 12.5px;
   flex-shrink: 0;
 }
@@ -357,8 +365,8 @@ a { color: inherit; text-decoration: none; }
 .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .panel-head h2 { font-size: 15.5px; font-weight: 600; }
 .panel-note { font-size: 12px; color: var(--ink-400); }
-.panel-eyebrow { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-600); }
-.link-btn { font-size: 12.5px; font-weight: 600; color: var(--accent-600); background: none; border: none; cursor: pointer; }
+.panel-eyebrow { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-ink); }
+.link-btn { font-size: 12.5px; font-weight: 600; color: var(--accent-ink); background: none; border: none; cursor: pointer; }
 .link-btn:hover { text-decoration: underline; }
 
 /* ----------------------------- TICKER STRIP ------------------------------ */
@@ -452,7 +460,7 @@ a { color: inherit; text-decoration: none; }
   color: var(--ink-700);
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%238B93A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%239CA6C0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
 }
@@ -516,9 +524,9 @@ a { color: inherit; text-decoration: none; }
   background: rgba(255,255,255,0.92);
   backdrop-filter: blur(6px);
 }
-.status-flag.good { color: var(--good-600); }
-.status-flag.critical { color: var(--critical-600); }
-.status-flag.stable { color: var(--neutral-600); }
+.status-flag.good { color: var(--good-on-light); }
+.status-flag.critical { color: var(--critical-on-light); }
+.status-flag.stable { color: var(--neutral-on-light); }
 .grade-chip {
   position: relative;
   z-index: 1;
@@ -649,7 +657,7 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
 }
 .chip:hover { border-color: var(--border-strong); }
-.chip.is-active { background: var(--ink-900); color: #fff; border-color: var(--ink-900); }
+.chip.is-active { background: var(--accent-500); color: #fff; border-color: var(--accent-500); }
 
 .alert-feed { display: flex; flex-direction: column; gap: 10px; }
 .alert-card {
@@ -688,8 +696,8 @@ a { color: inherit; text-decoration: none; }
 .connection-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 18px 16px; }
 .connection-head { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 14px; }
 .connection-icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }
-.connection-icon.shopify { background: #E9FBF1; color: #15803D; }
-.connection-icon.ebay { background: #EEF0FF; color: var(--accent-600); }
+.connection-icon.shopify { background: var(--good-soft); color: var(--good-600); }
+.connection-icon.ebay { background: var(--accent-soft); color: var(--accent-ink); }
 .connection-head h3 { font-size: 13.5px; font-weight: 600; }
 .connection-head p { font-size: 11.5px; color: var(--ink-400); margin-top: 1px; }
 .connection-head > div { flex: 1; min-width: 0; }
@@ -747,7 +755,8 @@ a { color: inherit; text-decoration: none; }
   bottom: 22px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: var(--ink-900);
+  background: var(--overlay-bg);
+  border: 1px solid var(--border-strong);
   color: #fff;
   padding: 11px 18px;
   border-radius: 10px;
