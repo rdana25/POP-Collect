@@ -16,7 +16,10 @@ const ICONS = {
   dollar: (s = 15) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M17 6.7c0-1.9-2.2-3.4-5-3.4s-5 1.3-5 3.2c0 4 10 1.9 10 6 0 1.9-2.2 3.5-5 3.5s-5-1.6-5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
   percent: (s = 15) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><circle cx="7.5" cy="7.5" r="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="16.5" r="2.6" stroke="currentColor" stroke-width="1.8"/><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
   bell: (s = 15) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M12 4v2M12 4a6 6 0 016 6c0 3.2.8 4.6 1.6 5.6.3.4 0 1-.5 1H4.9c-.5 0-.8-.6-.5-1C5.2 14.6 6 13.2 6 10a6 6 0 016-6zM9.5 19a2.6 2.6 0 005 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  edit: (s = 13) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M4 20h4l11-11a2.1 2.1 0 00-4-4L4 16v4z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
 };
+
+const escapeAttr = (v) => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 /* ------------------------------- DATA ------------------------------------ */
 
@@ -95,6 +98,16 @@ const getStatus = (c) => (c.median > c.retail ? 'gain' : c.median <= c.cost ? 'r
 const deltaPct = (c) => ((c.median - c.retail) / c.retail) * 100;
 const marketMarginPct = (c) => ((c.median - c.cost) / c.median) * 100;
 const marketValue = (c) => c.median * c.qty;
+
+function opportunityMath(card) {
+  const current = card.retail;
+  const suggested = Math.max(1, Math.round(card.median));
+  const priceDelta = suggested - current;
+  const pctDelta = (priceDelta / current) * 100;
+  const extraPerCard = priceDelta;
+  const extraTotal = extraPerCard * card.qty;
+  return { current, suggested, priceDelta, pctDelta, extraPerCard, extraTotal };
+}
 
 function sparkline(history, dotColorVar, w, h) {
   const min = Math.min(...history), max = Math.max(...history);
@@ -177,7 +190,10 @@ function cardTileHTML(card) {
       ${rangeGauge(card, status)}
       <div class="card-foot">
         <span class="card-foot-meta">${card.sales} sales · ${card.lastSold}</span>
-        <button class="card-foot-btn" data-refresh="${card.id}" type="button">${ICONS.refresh(13)}<span>Refresh</span></button>
+        <span class="card-foot-actions">
+          <button class="card-foot-btn" data-refresh="${card.id}" type="button">${ICONS.refresh(13)}<span>Refresh</span></button>
+          <button class="card-foot-btn" data-edit="${card.id}" type="button">${ICONS.edit(13)}<span>Edit</span></button>
+        </span>
       </div>
     </div>
   </article>`;
@@ -208,7 +224,10 @@ function listRowHTML(card) {
     <span class="delta-cell ${meta.deltaClass}">${meta.icon(11)}${pct(d)}</span>
     <span><span class="status-pill ${meta.pillClass}">${meta.label}</span></span>
     <span class="list-col-synced mono" style="color:var(--ink-400); font-size:11.5px;">${card.lastSold}</span>
-    <button class="list-sync-btn" data-refresh="${card.id}" type="button" aria-label="Refresh ${card.name}">${ICONS.refresh(14)}</button>
+    <span class="list-actions">
+      <button class="list-sync-btn" data-refresh="${card.id}" type="button" aria-label="Refresh ${card.name}">${ICONS.refresh(14)}</button>
+      <button class="list-sync-btn" data-edit="${card.id}" type="button" aria-label="Edit ${card.name}">${ICONS.edit(14)}</button>
+    </span>
   </div>`;
 }
 
@@ -249,9 +268,26 @@ function alertCardHTML(card) {
   const compareLabel = status === 'gain' ? 'Shopify retail' : 'Shopify cost';
   const compareValue = status === 'gain' ? card.retail : card.cost;
   const headline = status === 'gain' ? 'Price increase opportunity' : 'Margin loss warning';
-  const action = status === 'gain'
-    ? `Raise Shopify retail toward the $${money(card.median)} market median to capture demand.`
-    : `Market value has slipped to or below cost. Pull the listing or re-evaluate your holding strategy.`;
+
+  let body;
+  if (status === 'gain') {
+    const m = opportunityMath(card);
+    body = `
+      <div class="alert-math">
+        <p class="alert-math-explain">
+          Your last <b>${card.sales} eBay sales</b> settled at a median of <b>$${money(card.median)}</b> —
+          <b>${pct(d)}</b> above your current <b>$${money(card.retail)}</b> retail price. Demand is running ahead of your price.
+        </p>
+        <div class="alert-math-figures">
+          <div class="alert-math-figure"><span>Reprice to</span><b>$${money(m.suggested)}</b></div>
+          <div class="alert-math-figure"><span>Price increase</span><b class="good">+$${money(Math.abs(m.priceDelta))} · ${pct(m.pctDelta)}</b></div>
+          <div class="alert-math-figure"><span>Extra profit${card.qty > 1 ? ` · ${card.qty} in stock` : ' per card'}</span><b class="good">+$${money(m.extraTotal)}</b></div>
+        </div>
+      </div>`;
+  } else {
+    body = `<p class="alert-action"><b>Suggested action —</b> Market value has slipped to or below cost. Pull the listing or re-evaluate your holding strategy.</p>`;
+  }
+
   return `
   <article class="alert-card ${reviewed ? 'is-reviewed' : ''}" data-id="${card.id}">
     <span class="alert-icon ${meta.flagClass}">${meta.icon(18)}</span>
@@ -267,7 +303,7 @@ function alertCardHTML(card) {
         <div class="alert-figure"><span>${compareLabel}</span><span>$${money(compareValue)}</span></div>
         <div class="alert-figure"><span>Δ vs retail</span><span class="${meta.deltaClass}">${pct(d)}</span></div>
       </div>
-      <p class="alert-action"><b>Suggested action —</b> ${action}</p>
+      ${body}
     </div>
     <div class="alert-actions">
       <button class="btn btn-secondary btn-sm" data-goto="${card.id}" type="button">View card</button>
@@ -419,6 +455,130 @@ function renderAlerts() {
     </div>`;
 }
 
+/* ------------------------- INDIVIDUAL EDIT (modal) -------------------------- */
+
+function populateSelect(select, includeAll) {
+  const options = (includeAll ? ['<option value="all">All categories</option>'] : [])
+    .concat(Object.entries(CATEGORY_META).map(([key, meta]) => `<option value="${key}">${meta.label}</option>`));
+  select.innerHTML = options.join('');
+}
+
+function openEditModal(id) {
+  const card = CARDS.find((c) => c.id === id);
+  if (!card) return;
+  document.getElementById('editForm').dataset.editingId = id;
+  document.getElementById('editModalTitle').textContent = `Edit ${card.name}`;
+  document.getElementById('editName').value = card.name;
+  document.getElementById('editSet').value = card.set;
+  document.getElementById('editGrade').value = card.grade;
+  document.getElementById('editSku').value = card.sku;
+  document.getElementById('editCategory').value = card.category;
+  document.getElementById('editQty').value = card.qty;
+  document.getElementById('editCost').value = card.cost;
+  document.getElementById('editRetail').value = card.retail;
+  document.getElementById('editModalBackdrop').hidden = false;
+  document.getElementById('editName').focus();
+}
+
+function closeEditModal() {
+  document.getElementById('editModalBackdrop').hidden = true;
+}
+
+function handleEditFormSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('editForm').dataset.editingId;
+  const card = CARDS.find((c) => c.id === id);
+  if (!card) return;
+  card.name = document.getElementById('editName').value.trim() || card.name;
+  card.set = document.getElementById('editSet').value.trim() || card.set;
+  card.grade = document.getElementById('editGrade').value.trim() || card.grade;
+  card.sku = document.getElementById('editSku').value.trim() || card.sku;
+  card.category = document.getElementById('editCategory').value;
+  card.qty = Math.max(0, parseInt(document.getElementById('editQty').value, 10) || 0);
+  card.cost = Math.max(0, parseFloat(document.getElementById('editCost').value) || 0);
+  card.retail = Math.max(0, parseFloat(document.getElementById('editRetail').value) || 0);
+  closeEditModal();
+  renderAll();
+  showToast(`Saved changes to ${card.name}`);
+}
+
+/* --------------------------- BULK EDIT (spreadsheet) ------------------------ */
+
+const sheetTouched = new Set();
+
+function sheetRowHTML(card, index) {
+  const status = getStatus(card);
+  const meta = STATUS_META[status];
+  const categoryOptions = Object.entries(CATEGORY_META)
+    .map(([key, m]) => `<option value="${key}" ${key === card.category ? 'selected' : ''}>${m.label}</option>`)
+    .join('');
+  return `
+  <tr data-id="${card.id}">
+    <td class="sheet-rownum-cell">${index + 1}</td>
+    <td><input type="text" value="${escapeAttr(card.name)}" data-field="name" data-id="${card.id}"></td>
+    <td><input type="text" value="${escapeAttr(card.set)}" data-field="set" data-id="${card.id}"></td>
+    <td><select data-field="category" data-id="${card.id}">${categoryOptions}</select></td>
+    <td><input type="text" value="${escapeAttr(card.grade)}" data-field="grade" data-id="${card.id}"></td>
+    <td><input type="text" value="${escapeAttr(card.sku)}" data-field="sku" data-id="${card.id}" class="mono"></td>
+    <td><input type="number" min="0" step="1" value="${card.qty}" data-field="qty" data-id="${card.id}"></td>
+    <td><input type="number" min="0" step="0.01" value="${card.cost}" data-field="cost" data-id="${card.id}"></td>
+    <td><input type="number" min="0" step="0.01" value="${card.retail}" data-field="retail" data-id="${card.id}"></td>
+    <td class="readonly mono sheet-median">$${money(card.median)}</td>
+    <td class="readonly mono sheet-margin">${marketMarginPct(card).toFixed(0)}%</td>
+    <td class="readonly sheet-status"><span class="status-pill ${meta.pillClass}">${meta.label}</span></td>
+  </tr>`;
+}
+
+function renderSheet() {
+  document.getElementById('sheetBody').innerHTML = CARDS.map(sheetRowHTML).join('');
+}
+
+function updateSheetRowComputed(card) {
+  const row = document.querySelector(`#sheetBody tr[data-id="${card.id}"]`);
+  if (!row) return;
+  const meta = STATUS_META[getStatus(card)];
+  row.querySelector('.sheet-median').textContent = `$${money(card.median)}`;
+  row.querySelector('.sheet-margin').textContent = `${marketMarginPct(card).toFixed(0)}%`;
+  row.querySelector('.sheet-status').innerHTML = `<span class="status-pill ${meta.pillClass}">${meta.label}</span>`;
+}
+
+function handleSheetInput(e) {
+  const el = e.target.closest('[data-field]');
+  if (!el) return;
+  const card = CARDS.find((c) => c.id === el.dataset.id);
+  if (!card) return;
+  const field = el.dataset.field;
+  if (field === 'qty' || field === 'cost' || field === 'retail') {
+    const num = parseFloat(el.value);
+    if (!isNaN(num) && num >= 0) card[field] = num;
+  } else {
+    card[field] = el.value;
+  }
+  sheetTouched.add(card.id);
+  updateSheetRowComputed(card);
+}
+
+function enterSheetMode() {
+  sheetTouched.clear();
+  document.querySelector('#tab-inventory .toolbar').hidden = true;
+  document.getElementById('resultsCount').hidden = true;
+  document.getElementById('cardGrid').hidden = true;
+  document.getElementById('cardList').hidden = true;
+  document.getElementById('emptyState').hidden = true;
+  renderSheet();
+  document.getElementById('sheetView').hidden = false;
+}
+
+function exitSheetMode() {
+  document.getElementById('sheetView').hidden = true;
+  document.querySelector('#tab-inventory .toolbar').hidden = false;
+  document.getElementById('resultsCount').hidden = false;
+  document.getElementById('cardGrid').hidden = state.view !== 'grid';
+  document.getElementById('cardList').hidden = state.view !== 'list';
+  renderAll();
+  showToast(sheetTouched.size ? `Saved changes to ${sheetTouched.size} card${sheetTouched.size > 1 ? 's' : ''}` : 'No changes made');
+}
+
 function updateNavBadges() {
   const unreviewed = CARDS.filter((c) => getStatus(c) !== 'stable' && !state.reviewed.has(c.id)).length;
   document.getElementById('navInventoryCount').textContent = CARDS.length;
@@ -436,11 +596,7 @@ function updatePlanWidgets() {
   document.getElementById('metaMapped').textContent = `${CARDS.length} products`;
 }
 
-function syncPillText() {
-  return state.minutesSinceSync < 1 ? 'Live · synced just now' : `Live · synced ${state.minutesSinceSync}m ago`;
-}
 function updateSyncPill() {
-  document.getElementById('syncPillText').textContent = syncPillText();
   document.getElementById('metaLastSync').textContent = state.minutesSinceSync < 1 ? 'Just now' : `${state.minutesSinceSync} minutes ago`;
 }
 
@@ -471,6 +627,7 @@ function setActiveTab(tab) {
   document.querySelectorAll('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.id === `tab-${tab}`));
   document.getElementById('pageTitle').textContent = TAB_META[tab].title;
   document.getElementById('pageSubtitle').textContent = TAB_META[tab].subtitle;
+  document.getElementById('avatarBtn').classList.toggle('is-active', tab === 'billing');
   if (tab === 'alerts') { document.getElementById('notifDot').style.display = 'none'; }
   window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
@@ -554,10 +711,8 @@ function handleCardRefresh(id, btnEl) {
 /* -------------------------------- EVENTS ------------------------------------ */
 
 function populateCategoryFilter() {
-  const select = document.getElementById('filterCategory');
-  const options = ['<option value="all">All categories</option>']
-    .concat(Object.entries(CATEGORY_META).map(([key, meta]) => `<option value="${key}">${meta.label}</option>`));
-  select.innerHTML = options.join('');
+  populateSelect(document.getElementById('filterCategory'), true);
+  populateSelect(document.getElementById('editCategory'), false);
 }
 
 function bindEvents() {
@@ -608,10 +763,56 @@ function bindEvents() {
   gridBtn.addEventListener('click', () => setView('grid'));
   listBtn.addEventListener('click', () => setView('list'));
 
-  // card refresh (event delegation, survives re-renders)
+  // card refresh + edit (event delegation, survives re-renders)
   document.getElementById('tab-inventory').addEventListener('click', (e) => {
     const refreshBtn = e.target.closest('[data-refresh]');
     if (refreshBtn) { handleCardRefresh(refreshBtn.dataset.refresh, refreshBtn); return; }
+    const editBtn = e.target.closest('[data-edit]');
+    if (editBtn) { openEditModal(editBtn.dataset.edit); return; }
+  });
+
+  // edit all → spreadsheet mode
+  document.getElementById('editAllBtn').addEventListener('click', enterSheetMode);
+  document.getElementById('doneEditingBtn').addEventListener('click', exitSheetMode);
+  document.getElementById('sheetBody').addEventListener('input', handleSheetInput);
+  document.getElementById('sheetBody').addEventListener('change', handleSheetInput);
+
+  // individual edit modal
+  document.getElementById('editForm').addEventListener('submit', handleEditFormSubmit);
+  document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+  document.getElementById('editModalClose').addEventListener('click', closeEditModal);
+  document.getElementById('editModalBackdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'editModalBackdrop') closeEditModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('editModalBackdrop').hidden) closeEditModal();
+  });
+
+  // account menu dropdown
+  const avatarBtn = document.getElementById('avatarBtn');
+  const accountDropdown = document.getElementById('accountDropdown');
+  function closeAccountMenu() {
+    accountDropdown.hidden = true;
+    avatarBtn.setAttribute('aria-expanded', 'false');
+  }
+  avatarBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = accountDropdown.hidden;
+    accountDropdown.hidden = !willOpen;
+    avatarBtn.setAttribute('aria-expanded', String(willOpen));
+  });
+  document.addEventListener('click', (e) => {
+    if (!accountDropdown.hidden && !document.getElementById('accountMenu').contains(e.target)) closeAccountMenu();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !accountDropdown.hidden) closeAccountMenu();
+  });
+  accountDropdown.addEventListener('click', (e) => {
+    if (e.target.closest('[data-tab-link]')) closeAccountMenu();
+  });
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    closeAccountMenu();
+    showToast('This is a prototype — log out is not wired up.');
   });
 
   // overview: jump-to-card (ticker chips + attention rows)

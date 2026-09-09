@@ -53,24 +53,12 @@
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M4 12a8 8 0 0113.7-5.7M20 12a8 8 0 01-13.7 5.7M17 4v3.3h-3.3M7 20v-3.3h3.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Sync &amp; integrations</span>
         </button>
-        <button class="nav-item" data-tab="billing" type="button">
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.7"/></svg>
-          <span>Plan &amp; billing</span>
-        </button>
       </nav>
 
       <div class="sidebar-footer">
         <div class="plan-widget" id="planWidget">
-          <div class="plan-widget-top">
-            <span class="plan-name">Pro plan</span>
-            <a href="#" class="plan-upgrade" data-tab-link="billing">Upgrade →</a>
-          </div>
           <div class="plan-meter"><div class="plan-meter-fill" id="planMeterFill"></div></div>
           <span class="plan-meter-label" id="planMeterLabel">— of 800 SKUs tracked</span>
-        </div>
-        <div class="sync-pill" id="syncPill">
-          <span class="pulse-dot" aria-hidden="true"></span>
-          <span id="syncPillText">Live · syncing every 2h</span>
         </div>
       </div>
     </aside>
@@ -95,7 +83,27 @@
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 12a8 8 0 0113.7-5.7M20 12a8 8 0 01-13.7 5.7M17 4v3.3h-3.3M7 20v-3.3h3.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span>Sync now</span>
           </button>
-          <div class="avatar" title="Riccardo · Store owner">RD</div>
+          <div class="account-menu" id="accountMenu">
+            <button class="avatar-trigger" id="avatarBtn" type="button" aria-haspopup="true" aria-expanded="false">
+              <span class="avatar" title="Riccardo · Store owner">RD</span>
+              <svg class="chev" viewBox="0 0 24 24" width="13" height="13" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="account-dropdown" id="accountDropdown" hidden>
+              <div class="account-dropdown-head">
+                <span class="account-name">Riccardo Dana</span>
+                <span class="account-email">riccardo@vintage-vault.com</span>
+              </div>
+              <button class="account-dropdown-item" data-tab-link="billing" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.6"/></svg>
+                <span>Plan &amp; billing</span>
+              </button>
+              <div class="account-dropdown-divider"></div>
+              <button class="account-dropdown-item" id="logoutBtn" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M9 20H5a1 1 0 01-1-1V5a1 1 0 011-1h4M16 16l4-4-4-4M20 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Log out</span>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -167,6 +175,11 @@
                 <span>List</span>
               </button>
             </div>
+
+            <button class="btn btn-secondary" id="editAllBtn" type="button">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M9 4.5v15M14.5 4.5v15" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Edit all</span>
+            </button>
           </div>
 
           <p class="results-count" id="resultsCount"></p>
@@ -194,6 +207,35 @@
             <h3>No cards match those filters</h3>
             <p>Try clearing the search or switching status to "All statuses".</p>
             <button class="btn btn-secondary" id="clearFiltersBtn" type="button">Clear filters</button>
+          </div>
+
+          <!-- Bulk "edit all" spreadsheet mode -->
+          <div class="sheet-wrap" id="sheetView" hidden>
+            <div class="sheet-toolbar">
+              <span class="sheet-hint">Editing all cards · Tab or Enter moves between cells · changes save as you type</span>
+              <button class="btn btn-primary btn-sm" id="doneEditingBtn" type="button">Done editing</button>
+            </div>
+            <div class="sheet-scroll">
+              <table class="sheet-table" id="sheetTable">
+                <thead>
+                  <tr>
+                    <th class="sheet-rownum"></th>
+                    <th>Card name</th>
+                    <th>Set</th>
+                    <th>Category</th>
+                    <th>Grade</th>
+                    <th>SKU</th>
+                    <th>Qty</th>
+                    <th>Cost</th>
+                    <th>Retail</th>
+                    <th>Market median</th>
+                    <th>Margin</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="sheetBody"></tbody>
+              </table>
+            </div>
           </div>
         </section>
 
@@ -320,6 +362,39 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Individual card edit modal -->
+  <div class="modal-backdrop" id="editModalBackdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+      <div class="modal-head">
+        <h2 id="editModalTitle">Edit card</h2>
+        <button class="modal-close" id="editModalClose" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <form class="modal-form" id="editForm">
+        <label class="form-field">Card name<input type="text" id="editName" required></label>
+        <div class="form-row">
+          <label class="form-field">Set<input type="text" id="editSet" required></label>
+          <label class="form-field">Grade<input type="text" id="editGrade" required></label>
+        </div>
+        <div class="form-row">
+          <label class="form-field">Category<select id="editCategory"></select></label>
+          <label class="form-field">SKU / ticker<input type="text" id="editSku" required></label>
+        </div>
+        <div class="form-row three">
+          <label class="form-field">Qty in stock<input type="number" id="editQty" min="0" step="1" required></label>
+          <label class="form-field">Cost ($)<input type="number" id="editCost" min="0" step="0.01" required></label>
+          <label class="form-field">Retail ($)<input type="number" id="editRetail" min="0" step="0.01" required></label>
+        </div>
+        <p class="modal-note">Market median price syncs from eBay and can't be edited directly — use "Sync now" or a card's refresh button to update it.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="editCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
