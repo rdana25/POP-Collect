@@ -213,10 +213,12 @@ function smoothPath(pts) {
   const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
   const m = monotoneSlopes(ys);
   let d = `M${xs[0].toFixed(2)},${ys[0].toFixed(2)}`;
+  // m[] is dy per index step and points are evenly spaced, so the tangent
+  // offset for one-third of a step is simply m/3 (no multiply by the x step).
   for (let i = 0; i < pts.length - 1; i++) {
     const h = xs[i + 1] - xs[i];
-    const c1x = xs[i] + h / 3, c1y = ys[i] + (m[i] * h) / 3;
-    const c2x = xs[i + 1] - h / 3, c2y = ys[i + 1] - (m[i + 1] * h) / 3;
+    const c1x = xs[i] + h / 3, c1y = ys[i] + m[i] / 3;
+    const c2x = xs[i + 1] - h / 3, c2y = ys[i + 1] - m[i + 1] / 3;
     d += ` C${c1x.toFixed(2)},${c1y.toFixed(2)} ${c2x.toFixed(2)},${c2y.toFixed(2)} ${xs[i + 1].toFixed(2)},${ys[i + 1].toFixed(2)}`;
   }
   return d;
@@ -738,6 +740,43 @@ function bindChartCursor() {
 }
 
 /* ------------------------------- RENDERERS --------------------------------- */
+
+// Decorative ribbon: many hairline curves sharing a drifting centreline,
+// spread across a band whose width flips sign so the band twists.
+function renderRibbon() {
+  const el = document.getElementById('ribbon');
+  if (!el) return;
+  const W = 760, H = 300, N = 24;
+  const paths = [];
+  for (let i = 0; i < N; i++) {
+    const t = i / (N - 1) - 0.5;
+    const pts = [];
+    for (let x = 0; x <= W; x += 10) {
+      const u = x / W;
+      // Starts low (behind the hero panel), rises into the open slot on the
+      // right, then eases back down toward the edge.
+      const s = Math.min(1, Math.max(0, (u - 0.08) / 0.54));
+      const rise = s * s * (3 - 2 * s);
+      const center = 250 - 172 * rise + 46 * Math.max(0, u - 0.72) / 0.28 + 12 * Math.sin(u * Math.PI * 3.2 + 1.5);
+      const width = 130 * Math.cos(u * Math.PI * 1.9 + 0.9);
+      const shear = 26 * t * t * Math.sin(u * 5.5 + 1);
+      pts.push([x, center + t * width + shear]);
+    }
+    paths.push(`<path d="${smoothPath(pts)}" opacity="${(0.25 + 0.75 * (1 - Math.abs(t) * 1.4)).toFixed(2)}"/>`);
+  }
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="ribbon-grad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#7A9BFF" stop-opacity="0"/>
+        <stop offset=".22" stop-color="#7A9BFF" stop-opacity=".38"/>
+        <stop offset=".55" stop-color="#B08CFF" stop-opacity=".34"/>
+        <stop offset=".82" stop-color="#5FD3C6" stop-opacity=".3"/>
+        <stop offset="1" stop-color="#5FD3C6" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <g fill="none" stroke="url(#ribbon-grad)" stroke-width=".7" stroke-linecap="round" vector-effect="non-scaling-stroke">${paths.join('')}</g>
+  </svg>`;
+}
 
 function renderVault() {
   const sorted = [...CARDS].sort((a, b) => marketValue(b) - marketValue(a));
@@ -1374,6 +1413,7 @@ function bindEvents() {
 /* --------------------------------- INIT -------------------------------------- */
 
 function init() {
+  renderRibbon();
   populateSelect(document.getElementById('filterCategory'), true);
   populateCurrencySelect();
   bindEvents();
