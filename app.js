@@ -51,17 +51,17 @@ const YGO = (id) => `https://images.ygoprodeck.com/images/cards_small/${id}.jpg`
 const SCRY = (path) => `https://cards.scryfall.io/small/front/${path}.jpg`;
 const CARDS = [
   { id: 'chzx-223', name: 'Charizard ex #223', set: 'Obsidian Flames · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'CHZX-223-P10', mono: 'CE', qty: 1, cost: 210, retail: 389, median: 462, lastSoldPrice: 471, sales: 5, lastSoldDate: 'Sep 6', history: [268, 301, 329, 352, 398, 431, 462], image: POKE('sv3', 223) },
-  { id: 'umbv-215', name: 'Umbreon VMAX Alt Art #215', set: 'Evolving Skies · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'UMBV-215-P9', mono: 'UV', qty: 1, cost: 735, retail: 799, median: 690, lastSoldPrice: 675, sales: 4, lastSoldDate: 'Sep 7', history: [810, 795, 772, 748, 726, 705, 690], image: POKE('swsh7', 215) },
+  { id: 'umbv-215', name: 'Umbreon VMAX Alt Art #215', set: 'Evolving Skies · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'UMBV-215-P9', mono: 'UV', qty: 1, cost: 735, retail: 799, median: 690, lastSoldPrice: 675, sales: 4, lastSoldDate: 'Sep 7', history: [760, 750, 735, 720, 705, 695, 690], image: POKE('swsh7', 215) },
   { id: 'lugv-186', name: 'Lugia V Alt Art #186', set: 'Silver Tempest · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'LUGV-186-P10', mono: 'LV', qty: 2, cost: 164, retail: 270, median: 315.5, lastSoldPrice: 322, sales: 4, lastSoldDate: 'Sep 7', history: [196, 214, 238, 256, 281, 299, 315.5], image: POKE('swsh12', 186) },
   { id: 'rayq-218', name: 'Rayquaza VMAX Alt Art #218', set: 'Evolving Skies · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'RAYQ-218-P10', mono: 'RV', qty: 1, cost: 640, retail: 900, median: 1240, lastSoldPrice: 1310, sales: 5, lastSoldDate: 'Sep 8', history: [720, 810, 905, 1010, 1120, 1185, 1240], image: POKE('swsh7', 218) },
-  { id: 'bewd-lob', name: 'Blue-Eyes White Dragon', set: 'Legend of Blue Eyes 1st Ed · Yu-Gi-Oh!', category: 'yugioh', grade: 'BGS 9.5', sku: 'BEWD-LOB-B95', mono: 'BE', qty: 1, cost: 1200, retail: 1550, median: 1480, lastSoldPrice: 1465, sales: 5, lastSoldDate: 'Sep 5', history: [1390, 1420, 1465, 1510, 1495, 1470, 1480], image: YGO(89631139) },
-  { id: 'moxs-unl', name: 'Mox Sapphire', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8.5', sku: 'MOXS-UNL-B85', mono: 'MS', qty: 1, cost: 4200, retail: 5200, median: 4050, lastSoldPrice: 3980, sales: 3, lastSoldDate: 'Sep 4', history: [5100, 4950, 4700, 4500, 4300, 4150, 4050], image: 'https://cards.scryfall.io/small/front/f/7/f7d82f1d-631e-4668-9d10-7bf0ee515267.jpg' },
+  { id: 'bewd-lob', name: 'Blue-Eyes White Dragon', set: 'Legend of Blue Eyes 1st Ed · Yu-Gi-Oh!', category: 'yugioh', grade: 'BGS 9.5', sku: 'BEWD-LOB-B95', mono: 'BE', qty: 1, cost: 1200, retail: 1550, median: 1480, lastSoldPrice: 1465, sales: 5, lastSoldDate: 'Sep 5', history: [1330, 1360, 1400, 1430, 1455, 1470, 1480], image: YGO(89631139) },
+  { id: 'moxs-unl', name: 'Mox Sapphire', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8.5', sku: 'MOXS-UNL-B85', mono: 'MS', qty: 1, cost: 4200, retail: 5200, median: 4050, lastSoldPrice: 3980, sales: 3, lastSoldDate: 'Sep 4', history: [4700, 4600, 4450, 4300, 4200, 4100, 4050], image: 'https://cards.scryfall.io/small/front/f/7/f7d82f1d-631e-4668-9d10-7bf0ee515267.jpg' },
   { id: 'gira-186', name: 'Giratina V Alt Art #186', set: 'Lost Origin · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'GIRA-186-P9', mono: 'GV', qty: 3, cost: 95, retail: 160, median: 210, lastSoldPrice: 215, sales: 5, lastSoldDate: 'Sep 8', history: [128, 142, 158, 175, 188, 199, 210], image: POKE('swsh11', 186) },
-  { id: 'ancr-unl', name: 'Ancestral Recall', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8', sku: 'ANCR-UNL-B8', mono: 'AR', qty: 1, cost: 8200, retail: 9800, median: 9400, lastSoldPrice: 9450, sales: 3, lastSoldDate: 'Sep 3', history: [9050, 9150, 9280, 9360, 9300, 9350, 9400], image: SCRY('2/d/2dd41293-d7c8-4422-9f0c-b3e96350f5c9') },
+  { id: 'ancr-unl', name: 'Ancestral Recall', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8', sku: 'ANCR-UNL-B8', mono: 'AR', qty: 1, cost: 8200, retail: 9800, median: 9400, lastSoldPrice: 9450, sales: 3, lastSoldDate: 'Sep 3', history: [8650, 8800, 8930, 9080, 9200, 9320, 9400], image: SCRY('2/d/2dd41293-d7c8-4422-9f0c-b3e96350f5c9') },
   { id: 'pika-173', name: 'Pikachu #173', set: 'Pokémon 151 · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'PIKA-173-P10', mono: 'PK', qty: 2, cost: 250, retail: 320, median: 400, lastSoldPrice: 412, sales: 5, lastSoldDate: 'Sep 6', history: [298, 315, 332, 354, 371, 388, 400], image: POKE('sv3pt5', 173) },
-  { id: 'dmag-lob', name: 'Dark Magician', set: 'Legend of Blue Eyes 1st Ed · Yu-Gi-Oh!', category: 'yugioh', grade: 'PSA 9', sku: 'DMAG-LOB-P9', mono: 'DM', qty: 1, cost: 1450, retail: 1900, median: 1610, lastSoldPrice: 1595, sales: 4, lastSoldDate: 'Sep 2', history: [1720, 1695, 1670, 1650, 1630, 1615, 1610], image: YGO(46986414) },
-  { id: 'chzb-004s', name: 'Charizard Shadowless #4', set: 'Base Set · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'CHZB-004S-P9', mono: 'CS', qty: 1, cost: 3800, retail: 4600, median: 4550, lastSoldPrice: 4560, sales: 3, lastSoldDate: 'Sep 1', history: [4420, 4470, 4510, 4530, 4545, 4548, 4550], image: POKE('base1', 4) },
-  { id: 'moxr-unl', name: 'Mox Ruby', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8', sku: 'MOXR-UNL-B8', mono: 'MR', qty: 1, cost: 2600, retail: 3200, median: 2500, lastSoldPrice: 2470, sales: 4, lastSoldDate: 'Sep 7', history: [3050, 2950, 2820, 2700, 2610, 2550, 2500], image: SCRY('2/1/21b7cbae-6647-4f36-b02d-5535ac88b1a6') },
+  { id: 'dmag-lob', name: 'Dark Magician', set: 'Legend of Blue Eyes 1st Ed · Yu-Gi-Oh!', category: 'yugioh', grade: 'PSA 9', sku: 'DMAG-LOB-P9', mono: 'DM', qty: 1, cost: 1450, retail: 1900, median: 1610, lastSoldPrice: 1595, sales: 4, lastSoldDate: 'Sep 2', history: [1700, 1690, 1670, 1655, 1635, 1620, 1610], image: YGO(46986414) },
+  { id: 'chzb-004s', name: 'Charizard Shadowless #4', set: 'Base Set · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'CHZB-004S-P9', mono: 'CS', qty: 1, cost: 3800, retail: 4600, median: 4550, lastSoldPrice: 4560, sales: 3, lastSoldDate: 'Sep 1', history: [4150, 4230, 4320, 4400, 4470, 4520, 4550], image: POKE('base1', 4) },
+  { id: 'moxr-unl', name: 'Mox Ruby', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8', sku: 'MOXR-UNL-B8', mono: 'MR', qty: 1, cost: 2600, retail: 3200, median: 2500, lastSoldPrice: 2470, sales: 4, lastSoldDate: 'Sep 7', history: [2900, 2820, 2720, 2640, 2580, 2530, 2500], image: SCRY('2/1/21b7cbae-6647-4f36-b02d-5535ac88b1a6') },
 ];
 
 // Plan slider: card capacity → monthly price. The <input type="range"> value
@@ -77,7 +77,7 @@ const PRICING_TIERS = [
   { limit: 800, price: 99 },
   { limit: 1000, price: 118 },
 ];
-const CURRENT_PLAN_INDEX_DEFAULT = PRICING_TIERS.findIndex((t) => t.limit === 800);
+const CURRENT_PLAN_INDEX_DEFAULT = PRICING_TIERS.findIndex((t) => t.limit === 100);
 
 const CURRENCIES = {
   USD: { label: 'US Dollar', symbol: '$', decimals: 2 },
@@ -184,7 +184,7 @@ function seriesFor(card) {
   const ax = anchors.map((_, i) => N - 1 - (anchors.length - 1 - i) * 7);
   const m = monotoneSlopes(anchors);
   const rnd = seededRandom(card.id);
-  const noiseAmp = 0.0025;
+  const noiseAmp = 0.0015;
   let backVal = anchors[0];
   const back = [];
   for (let i = ax[0] - 1; i >= 0; i--) { backVal = backVal * (1 + (rnd() - 0.5) * 0.008); back.unshift(backVal); }
@@ -338,26 +338,25 @@ function cardTileHTML(card, index) {
     <div class="card-top">
       ${slabSVG(card)}
       <div class="card-title">
-        <div class="card-name">${esc(card.name)}</div>
+        <div class="card-title-row">
+          <div class="card-name">${esc(card.name)}</div>
+          <span class="card-status ${meta.cls}">${meta.glyph(11)}${meta.label}</span>
+        </div>
         <div class="card-set">${esc(card.set)}</div>
         <div class="card-meta"><span class="t-sym">$${esc(card.sku)}</span><span class="sep"></span><span>${esc(card.grade)}</span><span class="sep"></span><span>Qty ${card.qty}</span></div>
       </div>
     </div>
-    <span class="card-flag">${pillHTML(meta)}</span>
     <div class="card-price-row">
       <div>
         <div class="card-price">${fmt(card.median)}</div>
         <span class="card-price-label">Market median · <span class="${meta.cls === 'flat' ? '' : meta.cls}" style="font-weight:600">${pct(d)}</span> vs retail</span>
+        <span class="card-price-label">Last sold ${fmt(card.lastSoldPrice)} · ${esc(card.lastSoldDate)}</span>
       </div>
       <div class="card-spark">${sparkline(card, 96, 34, meta.cls)}</div>
     </div>
     ${priceRail(card, status)}
-    <div class="card-pnl ${pnl.cls}">
-      <span>${pnl.label}${card.qty > 1 ? ` · ${card.qty} in stock` : ''}</span>
-      <b>${pnl.sign}${fmt(Math.abs(pnl.value))}</b>
-    </div>
     <div class="card-foot">
-      <span class="card-foot-meta">Last sold ${fmt(card.lastSoldPrice)} · ${esc(card.lastSoldDate)}</span>
+      <span class="card-pnl ${pnl.cls}"><span>${pnl.label}</span><b>${pnl.sign}${fmt(Math.abs(pnl.value))}</b></span>
       <span class="card-actions">
         <button class="mini-btn" data-refresh="${card.id}" type="button">${ICONS.refresh(13)}<span>Refresh</span></button>
         <button class="mini-btn" data-edit="${card.id}" type="button">${ICONS.edit(13)}<span>Edit</span></button>
@@ -426,22 +425,34 @@ function listRowEditHTML(card) {
   </div>`;
 }
 
-function tickHTML(card) {
+function moverHTML(card) {
   const meta = STATUS_META[getStatus(card)];
   const d = deltaPct(card);
   return `
-  <button class="tick" data-goto="${card.id}" type="button">
-    <span class="t-sym">$${esc(card.sku)}</span>
-    <span class="t-spark">${sparkline(card, 46, 18, meta.cls)}</span>
-    <span class="t-price">${fmt(card.median)}</span>
-    <span class="t-delta ${meta.cls}">${meta.icon(10)}${pct(d)}</span>
+  <button class="mover" data-goto="${card.id}" type="button">
+    <span class="mover-name">
+      <span class="mover-title">${esc(card.name)}</span>
+      <span class="mover-sym">$${esc(card.sku)}</span>
+    </span>
+    <span class="mover-spark">${sparkline(card, 52, 18, meta.cls)}</span>
+    <span class="mover-price">${fmt(card.median)}</span>
+    <span class="mover-delta ${meta.cls}">${meta.icon(10)}${pct(d)}</span>
   </button>`;
 }
 
+// Each attention row carries the decision, not just the flag: what to
+// reprice to and what it is worth, or how far under cost the card sits.
 function attentionHTML(card) {
   const status = getStatus(card);
   const meta = STATUS_META[status];
   const d = deltaPct(card);
+  let math;
+  if (status === 'gain') {
+    const m = opportunityMath(card);
+    math = `<b class="up">Reprice to ${fmt(m.suggested)}</b><small>+${fmt(m.extraTotal)} upside${card.qty > 1 ? ` · ${card.qty} in stock` : ''}</small>`;
+  } else {
+    math = `<b class="down">${fmt((card.cost - card.median) * card.qty)} below cost</b><small>Hold or pull the listing</small>`;
+  }
   return `
   <button class="attention" data-goto="${card.id}" type="button">
     ${slabSVG(card)}
@@ -449,6 +460,7 @@ function attentionHTML(card) {
       <span class="attention-title">${esc(card.name)}</span>
       <span class="attention-sub">${signalHTML(meta, meta.headline)}<span>·</span><span>${esc(card.set.split('·')[0].trim())}</span></span>
     </span>
+    <span class="attention-math">${math}</span>
     <span class="attention-value">
       <span class="attention-price">${fmt(card.median)}</span>
       <span class="attention-pct ${meta.cls}">${pct(d)} vs retail</span>
@@ -654,20 +666,18 @@ function bindChartCursor() {
 /* ------------------------------- RENDERERS --------------------------------- */
 
 function renderTicker() {
-  const sorted = [...CARDS].sort((a, b) => Math.abs(deltaPct(b)) - Math.abs(deltaPct(a)));
-  // Two copies so the marquee loops seamlessly at -50%.
-  const half = `<div class="ticker-half">${sorted.map(tickHTML).join('')}</div>`;
-  document.getElementById('tickerStrip').innerHTML = half + half.replace(/<div class="ticker-half">/, '<div class="ticker-half" aria-hidden="true">');
+  const sorted = [...CARDS].sort((a, b) => Math.abs(deltaPct(b)) - Math.abs(deltaPct(a))).slice(0, 5);
+  document.getElementById('moversList').innerHTML = sorted.map(moverHTML).join('');
 }
 
 function renderAttention() {
-  const list = CARDS.filter((c) => getStatus(c) !== 'stable').sort((a, b) => Math.abs(deltaPct(b)) - Math.abs(deltaPct(a))).slice(0, 6);
+  const list = CARDS.filter((c) => getStatus(c) !== 'stable').sort((a, b) => Math.abs(deltaPct(b)) - Math.abs(deltaPct(a))).slice(0, 8);
   const el = document.getElementById('attentionList');
   el.innerHTML = list.length ? list.map(attentionHTML).join('') : `<p class="surface-note" style="padding:8px 0">Nothing needs attention right now.</p>`;
 }
 
 function renderActivityList() {
-  document.getElementById('activityList').innerHTML = activityLog.slice(0, 6).map((a) => `
+  document.getElementById('activityList').innerHTML = activityLog.slice(0, 4).map((a) => `
     <li class="activity ${a.alert ? 'is-alert' : ''}">
       <span class="activity-icon">${a.alert ? ICONS.bell(13) : ICONS.refresh(13)}</span>
       <span>
@@ -1025,6 +1035,24 @@ function populateCurrencySelect() {
 }
 
 function bindEvents() {
+  // collapsible rail, remembered across reloads
+  const app = document.querySelector('.app');
+  const railToggle = document.getElementById('railToggle');
+  function setRail(collapsed) {
+    app.classList.toggle('rail-collapsed', collapsed);
+    railToggle.setAttribute('aria-expanded', String(!collapsed));
+    railToggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    try { localStorage.setItem('cardline.rail', collapsed ? 'collapsed' : 'open'); } catch (_) {}
+  }
+  let railPref = 'open';
+  try { railPref = localStorage.getItem('cardline.rail') || 'open'; } catch (_) {}
+  setRail(railPref === 'collapsed');
+  railToggle.addEventListener('click', () => setRail(!app.classList.contains('rail-collapsed')));
+  document.addEventListener('keydown', (e) => {
+    const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || '');
+    if (!typing && e.key === '[' ) setRail(!app.classList.contains('rail-collapsed'));
+  });
+
   // nav, mobile tab bar and in-page links
   document.querySelectorAll('.nav-item[data-tab], .tabbar-item[data-tab]').forEach((btn) => btn.addEventListener('click', () => setActiveTab(btn.dataset.tab)));
   document.querySelectorAll('[data-tab-link]').forEach((el) => el.addEventListener('click', (e) => { e.preventDefault(); setActiveTab(el.dataset.tabLink); }));

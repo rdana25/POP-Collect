@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
 
@@ -39,6 +39,8 @@
       <linearGradient id="cat-basketball" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B4472B"/></linearGradient>
       <linearGradient id="cat-baseball" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2F4A8A"/><stop offset="1" stop-color="#C24A4A"/></linearGradient>
       <linearGradient id="cat-mtg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6B4FBB"/><stop offset="1" stop-color="#2C2A4A"/></linearGradient>
+      <!-- eBay wordmark colors, split at the letter boundaries of the official glyphs -->
+      <linearGradient id="ebay-colors" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E53238"/><stop offset=".252" stop-color="#E53238"/><stop offset=".252" stop-color="#0064D2"/><stop offset=".505" stop-color="#0064D2"/><stop offset=".505" stop-color="#F5AF02"/><stop offset=".712" stop-color="#F5AF02"/><stop offset=".712" stop-color="#86B817"/><stop offset="1" stop-color="#86B817"/></linearGradient>
       <linearGradient id="cat-yugioh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B5E34"/><stop offset="1" stop-color="#3B2A1A"/></linearGradient>
     </defs>
   </svg>
@@ -70,21 +72,21 @@
       </button>
 
       <nav class="nav" aria-label="Primary">
-        <button class="nav-item is-active" data-tab="overview" type="button">
+        <button class="nav-item is-active" data-tab="overview" type="button" title="Overview">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M3 3v16a2 2 0 0 0 2 2h16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m19 9-5 5-4-4-3 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Overview</span>
         </button>
-        <button class="nav-item" data-tab="inventory" type="button">
+        <button class="nav-item" data-tab="inventory" type="button" title="Inventory">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Inventory</span>
           <span class="nav-count" id="navInventoryCount">—</span>
         </button>
-        <button class="nav-item" data-tab="alerts" type="button">
+        <button class="nav-item" data-tab="alerts" type="button" title="Alerts">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M10.268 21a2 2 0 0 0 3.464 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Alerts</span>
           <span class="nav-badge" id="navAlertsBadge">0</span>
         </button>
-        <button class="nav-item" data-tab="sync" type="button">
+        <button class="nav-item" data-tab="sync" type="button" title="Sync &amp; integrations">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span>Sync &amp; integrations</span>
         </button>
@@ -109,6 +111,9 @@
     <div class="main">
       <header class="topbar">
         <span class="topbar-progress" aria-hidden="true"></span>
+        <button class="icon-btn rail-toggle" id="railToggle" type="button" aria-label="Collapse sidebar" aria-expanded="true" title="Toggle sidebar  [">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><rect x="3" y="3" width="18" height="18" rx="2.5" stroke="currentColor" stroke-width="1.75"/><path d="M9 3v18" stroke="currentColor" stroke-width="1.75"/></svg>
+        </button>
         <label class="search" for="globalSearch">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
           <input id="globalSearch" type="text" placeholder="Search cards, sets, SKUs" autocomplete="off" />
@@ -200,8 +205,6 @@
             <div class="stat-row" id="statRow"></div>
           </section>
 
-          <div class="ticker" aria-label="Market ticker"><div class="ticker-track" id="tickerStrip"></div></div>
-
           <div class="overview-split">
             <section class="surface">
               <div class="surface-head">
@@ -211,13 +214,23 @@
               <div class="attention-list" id="attentionList"></div>
             </section>
 
-            <section class="surface">
-              <div class="surface-head">
-                <h2>Recent activity</h2>
-                <button class="link-btn" data-tab-link="sync" type="button">Sync settings</button>
-              </div>
-              <ol class="activity-list" id="activityList"></ol>
-            </section>
+            <div class="overview-side">
+              <section class="surface">
+                <div class="surface-head">
+                  <h2>Top movers</h2>
+                  <span class="surface-note">Biggest gap to retail</span>
+                </div>
+                <div class="movers" id="moversList"></div>
+              </section>
+
+              <section class="surface">
+                <div class="surface-head">
+                  <h2>Recent activity</h2>
+                  <button class="link-btn" data-tab-link="sync" type="button">Sync settings</button>
+                </div>
+                <ol class="activity-list" id="activityList"></ol>
+              </section>
+            </div>
           </div>
         </section>
 
@@ -357,7 +370,7 @@
             <section class="surface connection">
               <div class="connection-head">
                 <span class="connection-mark shopify" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="22" height="22"><path d="M17.4 6.2c0-.1-.1-.2-.2-.2l-1.6-.1-1.2-1.2c-.1-.1-.3-.1-.4-.1l-.6.2C13 3.5 12.1 2.5 10.9 2.5c-2.3 0-3.5 2.9-3.9 4.4l-1.8.6c-.5.2-.6.2-.6.7L3.3 19.7l10.2 1.9 5.5-1.2-1.6-14.2zM12.5 5l-1.3.4c0-.7-.1-1.6-.5-2.1.9.2 1.5 1 1.8 1.7zm-1.9-1.8c.4.4.5 1.4.5 2.5l-2.5.8c.4-1.6 1.2-2.9 2-3.3zM9.4 4.5c.1 0 .2 0 .3.1-.9.6-1.6 1.9-1.9 3.6l-1.7.5c.5-1.6 1.6-4.2 3.3-4.2z" fill="#95BF47"/><path d="M17.2 6c-.1 0-.2.1-.2.2l-.2.1-1.3 14.6 5.5-1.2-1.6-14.2c-.1-.1-.2-.1-.2-.1L17.2 6z" fill="#5E8E3E"/><path d="M12.6 8.6l-.6 2c-.5-.2-1-.4-1.6-.4-1.3 0-1.3.8-1.3 1 0 1.1 2.9 1.5 2.9 4.1 0 2.1-1.3 3.4-3.1 3.4-2.1 0-3.2-1.3-3.2-1.3l.6-1.9s1.1.9 2 .9c.6 0 .8-.5.8-.8 0-1.4-2.4-1.5-2.4-3.9 0-2 1.5-4 4.4-4 1.1 0 1.5.9 1.5.9z" fill="#fff"/></svg>
+                  <svg viewBox="0 0 24 24" width="22" height="22"><path fill="#95BF47" d="M15.337 23.979l7.216-1.561s-2.604-17.613-2.625-17.73c-.018-.116-.114-.192-.211-.192s-1.929-.136-1.929-.136-1.275-1.274-1.439-1.411c-.045-.037-.075-.057-.121-.074l-.914 21.104h.023zM11.71 11.305s-.81-.424-1.774-.424c-1.447 0-1.504.906-1.504 1.141 0 1.232 3.24 1.715 3.24 4.629 0 2.295-1.44 3.76-3.406 3.76-2.354 0-3.54-1.465-3.54-1.465l.646-2.086s1.245 1.066 2.28 1.066c.675 0 .975-.545.975-.932 0-1.619-2.654-1.694-2.654-4.359-.034-2.237 1.571-4.416 4.827-4.416 1.257 0 1.875.361 1.875.361l-.945 2.715-.02.01zM11.17.83c.136 0 .271.038.405.135-.984.465-2.064 1.639-2.508 3.992-.656.213-1.293.405-1.889.578C7.697 3.75 8.951.84 11.17.84V.83zm1.235 2.949v.135c-.754.232-1.583.484-2.394.736.466-1.777 1.333-2.645 2.085-2.971.193.501.309 1.176.309 2.1zm.539-2.234c.694.074 1.141.867 1.429 1.755-.349.114-.735.231-1.158.366v-.252c0-.752-.096-1.371-.271-1.871v.002zm2.992 1.289c-.02 0-.06.021-.078.021s-.289.075-.714.21c-.423-1.233-1.176-2.37-2.508-2.37h-.115C12.135.209 11.669 0 11.265 0 8.159 0 6.675 3.877 6.21 5.846c-1.194.365-2.063.636-2.16.674-.675.213-.694.232-.772.87-.075.462-1.83 14.063-1.83 14.063L15.009 24l.927-21.166z"/></svg>
                 </span>
                 <div class="connection-title">
                   <h3>Shopify</h3>
@@ -376,7 +389,7 @@
             <section class="surface connection">
               <div class="connection-head">
                 <span class="connection-mark ebay" aria-hidden="true">
-                  <svg viewBox="0 0 52 24" width="40" height="18"><text x="0" y="19" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" letter-spacing="-1"><tspan fill="#E53238">e</tspan><tspan fill="#0064D2">b</tspan><tspan fill="#F5AF02">a</tspan><tspan fill="#86B817">y</tspan></text></svg>
+                  <svg viewBox="0 0 24 24" width="30" height="30"><path fill="url(#ebay-colors)" d="M6.056 12.132v-4.92h1.2v3.026c.59-.703 1.402-.906 2.202-.906 1.34 0 2.828.904 2.828 2.855 0 .233-.015.457-.06.668.24-.953 1.274-1.305 2.896-1.344.51-.018 1.095-.018 1.56-.018v-.135c0-.885-.556-1.244-1.53-1.244-.72 0-1.245.3-1.305.81h-1.275c.136-1.29 1.5-1.62 2.686-1.62 1.064 0 1.995.27 2.415 1.02l-.436-.84h1.41l2.055 4.125 2.055-4.126H24l-3.72 7.305h-1.346l1.07-2.04-2.33-4.38c.13.255.2.555.2.93v2.46c0 .346.01.69.04 1.005H16.8a6.543 6.543 0 01-.046-.765c-.603.734-1.32.96-2.32.96-1.48 0-2.272-.78-2.272-1.695 0-.15.015-.284.037-.405-.3 1.246-1.36 2.086-2.767 2.086-.87 0-1.694-.315-2.2-.93 0 .24-.015.494-.04.734h-1.18c.02-.39.04-.855.04-1.245v-1.05h-4.83c.065 1.095.818 1.74 1.853 1.74.718 0 1.355-.3 1.568-.93h1.24c-.24 1.29-1.61 1.725-2.79 1.725C.95 15.009 0 13.822 0 12.232c0-1.754.982-2.91 3.116-2.91 1.688 0 2.93.886 2.94 2.806v.005zm9.137.183c-1.095.034-1.77.233-1.77.95 0 .465.36.97 1.305.97 1.26 0 1.935-.69 1.935-1.814v-.13c-.45 0-.99.006-1.484.022h.012zm-6.06 1.875c1.11 0 1.876-.806 1.876-2.02s-.768-2.02-1.893-2.02c-1.11 0-1.89.806-1.89 2.02s.765 2.02 1.875 2.02h.03zm-4.35-2.514c-.044-1.125-.854-1.546-1.725-1.546-.944 0-1.694.474-1.815 1.546z"/></svg>
                 </span>
                 <div class="connection-title">
                   <h3>eBay Marketplace Insights</h3>
@@ -405,12 +418,12 @@
                 <button class="switch is-on" role="switch" aria-checked="true" type="button" aria-label="Email alerts"></button>
               </div>
               <div class="destination">
-                <span class="destination-icon brand-slack"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M5.6 15.1a2 2 0 11-2-2h2v2zm1 0a2 2 0 014 0v5a2 2 0 11-4 0v-5z" fill="#E01E5A"/><path d="M8.9 5.6a2 2 0 112-2v2h-2zm0 1a2 2 0 010 4h-5a2 2 0 110-4h5z" fill="#36C5F0"/><path d="M18.4 8.9a2 2 0 112 2h-2v-2zm-1 0a2 2 0 01-4 0v-5a2 2 0 114 0v5z" fill="#2EB67D"/><path d="M15.1 18.4a2 2 0 11-2 2v-2h2zm0-1a2 2 0 010-4h5a2 2 0 110 4h-5z" fill="#ECB22E"/></svg></span>
+                <span class="destination-icon brand-slack"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="#E01E5A" d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z"/><path fill="#36C5F0" d="M8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312z"/><path fill="#2EB67D" d="M18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312z"/><path fill="#ECB22E" d="M15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg></span>
                 <span class="destination-text"><span class="destination-label">Slack, #card-pricing</span><span class="destination-detail">Webhook connected</span></span>
                 <button class="switch is-on" role="switch" aria-checked="true" type="button" aria-label="Slack alerts"></button>
               </div>
               <div class="destination">
-                <span class="destination-icon brand-discord"><svg viewBox="0 0 24 24" width="19" height="19"><path d="M19.6 5.3A17 17 0 0015.4 4l-.2.4a15.6 15.6 0 00-6.4 0L8.6 4a17 17 0 00-4.2 1.3C1.7 9.3 1 13.2 1.4 17a17 17 0 005.2 2.6l1.1-1.8a11 11 0 01-1.7-.8l.4-.3a12.2 12.2 0 0011.2 0l.4.3-1.7.8 1.1 1.8a17 17 0 005.2-2.6c.5-4.4-.8-8.3-3-11.7zM8.7 14.7c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1c1 0 1.9 1 1.9 2.1s-.9 2.1-1.9 2.1zm6.6 0c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1c1 0 1.9 1 1.9 2.1s-.8 2.1-1.9 2.1z" fill="#5865F2"/></svg></span>
+                <span class="destination-icon brand-discord"><svg viewBox="0 0 24 24" width="19" height="19"><path fill="#5865F2" d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></span>
                 <span class="destination-text"><span class="destination-label">Discord</span><span class="destination-detail">Not connected</span></span>
                 <button class="switch" role="switch" aria-checked="false" type="button" aria-label="Discord alerts"></button>
               </div>
@@ -459,7 +472,7 @@
               <span class="plan-limit" id="planReadoutLimit">—</span>
             </div>
             <div class="slider-wrap">
-              <input type="range" class="slider" id="planSlider" min="0" max="8" step="1" value="7" aria-label="Plan tier by card capacity">
+              <input type="range" class="slider" id="planSlider" min="0" max="8" step="1" value="2" aria-label="Plan tier by card capacity">
               <div class="slider-ticks" id="planSliderTicks"></div>
             </div>
             <ul class="features">
@@ -586,6 +599,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
