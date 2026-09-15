@@ -544,6 +544,7 @@ function attentionHTML(card) {
   }
   return `
   <button class="attention" data-goto="${card.id}" type="button">
+    ${slabSVG(card)}
     <span class="attention-main">
       <span class="attention-title">${esc(card.name)}</span>
       <span class="attention-sub">${signalHTML(meta, meta.headline)}<span>·</span><span>${esc(card.set.split('·')[0].trim())}</span></span>

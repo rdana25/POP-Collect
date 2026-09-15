@@ -579,7 +579,7 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
 .attention-list { display: flex; flex-direction: column; }
 .attention {
   display: grid;
-  grid-template-columns: 1.2fr 1fr auto;
+  grid-template-columns: auto 1.2fr 1fr auto;
   align-items: center;
   gap: 14px;
   padding: 10px 8px;
@@ -1089,7 +1089,7 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   .x-stats { grid-template-columns: repeat(3, 1fr); }
   .x-stats .stat:nth-child(4) { padding-left: 0; box-shadow: none; }
   .overview-split { grid-template-columns: 1fr; }
-  .attention { grid-template-columns: 1.3fr 1fr auto; }
+  .attention { grid-template-columns: auto 1.3fr 1fr auto; }
   .current-plan { grid-template-columns: 1fr; gap: 18px; }
 }
 
@@ -1162,7 +1162,7 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   #syncNowBtn { padding: 9px 11px; }
   .attention-sub > span:nth-child(n+2) { display: none; }
   .attention-pct { font-size: 11.5px; }
-  .attention { grid-template-columns: 1fr auto; }
+  .attention { grid-template-columns: auto 1fr auto; }
   .attention-math { display: none; }
   .card { padding: 14px 14px 12px; }
   .card-spark { width: 72px; height: 30px; }
