@@ -25,9 +25,9 @@ const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').repl
 /* ------------------------------- DATA ------------------------------------ */
 
 const CATEGORY_META = {
-  pokemon: { label: 'Pokémon TCG', grad: 'cat-pokemon' },
-  mtg: { label: 'Magic: The Gathering', grad: 'cat-mtg' },
-  yugioh: { label: 'Yu-Gi-Oh!', grad: 'cat-yugioh' },
+  pokemon: { label: 'Pokémon TCG', grad: 'cat-pokemon', color: '#3B7DD8' },
+  mtg: { label: 'Magic: The Gathering', grad: 'cat-mtg', color: '#6B4FBB' },
+  yugioh: { label: 'Yu-Gi-Oh!', grad: 'cat-yugioh', color: '#B07A3E' },
 };
 
 // cls drives every colored element: up (opportunity), down (risk), flat (stable).
@@ -105,6 +105,7 @@ const state = {
   planIndex: CURRENT_PLAN_INDEX_DEFAULT,
   currentPlanIndex: CURRENT_PLAN_INDEX_DEFAULT,
   editingId: null,
+  expandedId: null,
   chartRange: 30,
 };
 
@@ -245,21 +246,22 @@ function slabSVG(card) {
   const [grader = '', grade = ''] = String(card.grade).split(/\s+/);
   // Label strip mirrors a real grading label: grader at left, barcode ticks, grade at right.
   const bars = [21.5, 23, 24.2, 26, 27.6, 28.6, 30.3].map((x, i) => `<rect x="${x}" y="8.5" width="${i % 3 === 1 ? .9 : .5}" height="6" fill="#fff" opacity=".55"/>`).join('');
-  return `<svg class="slab" viewBox="0 0 52 72" aria-hidden="true">
-    <rect x=".5" y=".5" width="51" height="71" rx="7" fill="#fff" stroke="rgba(14,18,32,.14)"/>
+  // Art window is true card proportion (63:88) so nothing is cropped.
+  return `<svg class="slab" viewBox="0 0 52 80" aria-hidden="true">
+    <rect x=".5" y=".5" width="51" height="79" rx="7" fill="#fff" stroke="rgba(14,18,32,.14)"/>
     <rect x="7" y="6" width="38" height="11" rx="2" fill="#0E1220"/>
     <text x="9.5" y="14.2" font-size="5.6" font-weight="700" fill="#fff" letter-spacing=".3">${esc(grader)}</text>
     ${bars}
     <text x="42.8" y="14.4" text-anchor="end" font-size="7.4" font-weight="700" fill="#fff">${esc(grade)}</text>
-    <svg x="7" y="20" width="38" height="45" viewBox="0 0 38 45">
-      <rect width="38" height="45" rx="2.5" fill="url(#${cat.grad})"/>
+    <svg x="7" y="20" width="38" height="53" viewBox="0 0 38 53">
+      <rect width="38" height="53" rx="2.5" fill="url(#${cat.grad})"/>
       ${card.image
-        ? `<image href="${esc(card.image)}" width="38" height="45" preserveAspectRatio="xMidYMid slice"/>`
-        : `<rect x="3" y="3" width="32" height="39" rx="2" fill="#fff" opacity=".12"/>
-      <text x="19" y="27" text-anchor="middle" font-size="12" font-weight="600" fill="#fff" opacity=".94">${esc(card.mono)}</text>`}
-      <rect class="slab-sheen" width="38" height="45" fill="url(#slab-sheen)"/>
+        ? `<image href="${esc(card.image)}" width="38" height="53" preserveAspectRatio="xMidYMid slice"/>`
+        : `<rect x="3" y="3" width="32" height="47" rx="2" fill="#fff" opacity=".12"/>
+      <text x="19" y="31" text-anchor="middle" font-size="12" font-weight="600" fill="#fff" opacity=".94">${esc(card.mono)}</text>`}
+      <rect class="slab-sheen" width="38" height="53" fill="url(#slab-sheen)"/>
     </svg>
-    <rect x=".5" y=".5" width="51" height="71" rx="7" fill="url(#slab-shine)"/>
+    <rect x=".5" y=".5" width="51" height="79" rx="7" fill="url(#slab-shine)"/>
   </svg>`;
 }
 
@@ -327,16 +329,117 @@ function cardEditFieldsHTML(card) {
     </div>`;
 }
 
+// Shared geometry for the hero chart and the expanded-card chart: a market
+// line drawn inside the cost→retail band, scaled to fill the height.
+function chartGeometry(pts, retailRef, costRef, W, H, top = 10, bottom = 10) {
+  const n = pts.length;
+  let lo = Math.min(...pts, retailRef, costRef), hi = Math.max(...pts, retailRef, costRef);
+  const minSpan = pts[n - 1] * 0.14;
+  if (hi - lo < minSpan) { const mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = mid + minSpan / 2; }
+  const pad = (hi - lo) * 0.06;
+  lo -= pad; hi += pad;
+  const x = (i) => (i / (n - 1)) * W;
+  const y = (v) => top + (1 - (v - lo) / (hi - lo)) * (H - top - bottom);
+  const xy = pts.map((v, i) => [x(i), y(v)]);
+  const line = smoothPath(xy);
+  return { n, xy, line, area: `${line} L${W},${H} L0,${H} Z`, refY: y(retailRef), costY: y(costRef) };
+}
+
+function chartSVG(g, W, H) {
+  return `
+    <rect class="band" x="0" y="${g.refY.toFixed(1)}" width="${W}" height="${(g.costY - g.refY).toFixed(1)}"/>
+    <path class="area" d="${g.area}"/>
+    <line class="ref" x1="0" x2="${W}" y1="${g.refY.toFixed(1)}" y2="${g.refY.toFixed(1)}"/>
+    <line class="ref cost" x1="0" x2="${W}" y1="${g.costY.toFixed(1)}" y2="${g.costY.toFixed(1)}"/>
+    <path class="line" pathLength="1" d="${g.line}"/>`;
+}
+
+function cardChartHTML(card) {
+  const pts = seriesFor(card);
+  const W = 1000, H = 170;
+  const g = chartGeometry(pts, card.retail, card.cost, W, H);
+  const endTop = `${(g.xy[g.n - 1][1] / H) * 100}%`;
+  const labels = [0, 30, 60, 89].map((i) => `<span style="left:${(i / (g.n - 1)) * 100}%">${i === 89 ? 'Today' : dateLabel(89 - i)}</span>`).join('');
+  return `
+  <div class="card-chart">
+    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${chartSVG(g, W, H)}</svg>
+    <span class="chart-ylabel" style="top:${(g.refY / H) * 100}%">Retail ${fmt(card.retail)}</span>
+    <span class="chart-ylabel" style="top:${(g.costY / H) * 100}%">Cost ${fmt(card.cost)}</span>
+    <div class="chart-end" style="top:${endTop}"></div>
+    <span class="chart-tag" style="top:${endTop}">${fmt(card.median)}</span>
+    <div class="chart-labels">${labels}</div>
+  </div>`;
+}
+
+function cardTileExpandedHTML(card) {
+  const status = getStatus(card);
+  const meta = STATUS_META[status];
+  const d = deltaPct(card);
+  const pnl = pnlInfo(card, status);
+  const reviewed = state.reviewed.has(card.id);
+  let suggest;
+  if (status === 'gain') {
+    const m = opportunityMath(card);
+    suggest = `<div class="alert-suggest up"><b>Reprice to ${fmt(m.suggested)}</b> — ${pct(m.pctDelta)} on each card, +${fmt(m.extraPerCard)} per sale${card.qty > 1 ? `, +${fmt(m.extraTotal)} across ${card.qty} in stock` : ''}.</div>`;
+  } else if (status === 'risk') {
+    suggest = `<div class="alert-suggest down"><b>Hold or pull the listing.</b> The market is ${fmt(card.cost - card.median)} under what you paid. Wait for sales to recover before repricing, or accept the loss to free up capital.</div>`;
+  } else {
+    suggest = `<div class="alert-suggest"><b>Inside your margin band.</b> The market sits between your cost and retail price. No action needed.</div>`;
+  }
+  const first = seriesFor(card)[0];
+  const change90 = ((card.median - first) / first) * 100;
+  return `
+  <article class="card is-expanded" data-id="${card.id}">
+    <div class="x-art">${slabSVG(card)}</div>
+    <div class="x-main">
+      <div class="x-head">
+        <div class="x-title">
+          <div class="card-name">${esc(card.name)}</div>
+          <div class="card-set">${esc(card.set)}</div>
+          <div class="card-meta"><span class="t-sym">$${esc(card.sku)}</span><span class="sep"></span><span>${esc(card.grade)}</span><span class="sep"></span><span>Qty ${card.qty}</span><span class="sep"></span><span class="card-status ${meta.cls}">${meta.glyph(11)}${meta.label}</span></div>
+        </div>
+        <button class="icon-btn x-close" data-close-expand type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="x-price-row">
+        <div>
+          <div class="card-price">${fmt(card.median)}</div>
+          <span class="card-price-label">eBay sold median · <span class="${meta.cls === 'flat' ? '' : meta.cls}" style="font-weight:600">${pct(d)}</span> vs retail</span>
+        </div>
+        <span class="x-range">${pct(change90)} over 90 days</span>
+      </div>
+      ${cardChartHTML(card)}
+      <div class="stat-row x-stats">
+        <div class="stat"><span class="stat-label">Cost</span><span class="stat-value">${fmt(card.cost)}</span><span class="stat-sub">What you paid</span></div>
+        <div class="stat"><span class="stat-label">Retail</span><span class="stat-value">${fmt(card.retail)}</span><span class="stat-sub">Listed on Shopify</span></div>
+        <div class="stat"><span class="stat-label">Last sold</span><span class="stat-value">${fmt(card.lastSoldPrice)}</span><span class="stat-sub">${esc(card.lastSoldDate)}</span></div>
+        <div class="stat"><span class="stat-label">Sales in window</span><span class="stat-value">${card.sales}</span><span class="stat-sub">Median of last ${card.sales}</span></div>
+        <div class="stat"><span class="stat-label">Market margin</span><span class="stat-value">${marketMarginPct(card).toFixed(0)}%</span><span class="stat-sub">At today's median</span></div>
+        <div class="stat"><span class="stat-label">${pnl.label}</span><span class="stat-value ${pnl.cls === 'flat' ? '' : pnl.cls}">${pnl.sign}${fmt(Math.abs(pnl.value))}</span><span class="stat-sub">${card.qty > 1 ? `${card.qty} in stock` : 'Per card'}</span></div>
+      </div>
+      ${suggest}
+      <div class="x-actions">
+        <button class="btn btn-ghost btn-sm" data-refresh="${card.id}" type="button">${ICONS.refresh(13)}<span>Refresh price</span></button>
+        <button class="btn btn-ghost btn-sm" data-edit="${card.id}" type="button">${ICONS.edit(13)}<span>Edit card</span></button>
+        ${status !== 'stable' ? `<button class="btn ${reviewed ? 'btn-ghost' : 'btn-ink'} btn-sm" data-toggle-reviewed="${card.id}" type="button">${reviewed ? 'Reviewed' : 'Mark reviewed'}</button>` : ''}
+      </div>
+    </div>
+  </article>`;
+}
+
 function cardTileHTML(card, index) {
   if (state.editingId === card.id) return cardTileEditHTML(card);
+  if (state.expandedId === card.id) return cardTileExpandedHTML(card);
   const status = getStatus(card);
   const meta = STATUS_META[status];
   const d = deltaPct(card);
   const pnl = pnlInfo(card, status);
   return `
   <article class="card" data-id="${card.id}" style="animation-delay:${Math.min(index, 8) * 40}ms">
+    <div class="card-art">${slabSVG(card)}</div>
+    <div class="card-body">
     <div class="card-top">
-      ${slabSVG(card)}
       <div class="card-title">
         <div class="card-title-row">
           <div class="card-name">${esc(card.name)}</div>
@@ -362,23 +465,24 @@ function cardTileHTML(card, index) {
         <button class="mini-btn" data-edit="${card.id}" type="button">${ICONS.edit(13)}<span>Edit</span></button>
       </span>
     </div>
+    </div>
   </article>`;
 }
 
 function cardTileEditHTML(card) {
   return `
   <article class="card is-editing" data-id="${card.id}">
-    <div class="card-top">
-      ${slabSVG(card)}
+    <div class="card-art">${slabSVG(card)}</div>
+    <div class="card-body">
       <div class="card-title">
         <div class="card-name">${esc(card.name)}</div>
         <div class="card-set">Editing · changes save as you type</div>
       </div>
-    </div>
-    <div class="card-edit">${cardEditFieldsHTML(card)}</div>
-    <div class="card-edit-foot">
-      <span class="card-foot-meta">Esc to close</span>
-      <button class="mini-btn is-primary" data-done-edit="${card.id}" type="button">${ICONS.check(13)}<span>Done</span></button>
+      <div class="card-edit">${cardEditFieldsHTML(card)}</div>
+      <div class="card-edit-foot">
+        <span class="card-foot-meta">Esc to close</span>
+        <button class="btn btn-ink btn-sm" data-done-edit="${card.id}" type="button">${ICONS.check(13)}<span>Done</span></button>
+      </div>
     </div>
   </article>`;
 }
@@ -425,21 +529,6 @@ function listRowEditHTML(card) {
   </div>`;
 }
 
-function moverHTML(card) {
-  const meta = STATUS_META[getStatus(card)];
-  const d = deltaPct(card);
-  return `
-  <button class="mover" data-goto="${card.id}" type="button">
-    <span class="mover-name">
-      <span class="mover-title">${esc(card.name)}</span>
-      <span class="mover-sym">$${esc(card.sku)}</span>
-    </span>
-    <span class="mover-spark">${sparkline(card, 52, 18, meta.cls)}</span>
-    <span class="mover-price">${fmt(card.median)}</span>
-    <span class="mover-delta ${meta.cls}">${meta.icon(10)}${pct(d)}</span>
-  </button>`;
-}
-
 // Each attention row carries the decision, not just the flag: what to
 // reprice to and what it is worth, or how far under cost the card sits.
 function attentionHTML(card) {
@@ -455,7 +544,6 @@ function attentionHTML(card) {
   }
   return `
   <button class="attention" data-goto="${card.id}" type="button">
-    ${slabSVG(card)}
     <span class="attention-main">
       <span class="attention-title">${esc(card.name)}</span>
       <span class="attention-sub">${signalHTML(meta, meta.headline)}<span>·</span><span>${esc(card.set.split('·')[0].trim())}</span></span>
@@ -578,27 +666,12 @@ function renderHero() {
 function renderChart(pts, retailRef, costRef) {
   const svg = document.querySelector('#heroChart .chart-svg');
   const chart = document.getElementById('heroChart');
-  const W = 1000, H = 230, top = 10, bottom = 10;
-  const n = pts.length;
-  let lo = Math.min(...pts, retailRef, costRef), hi = Math.max(...pts, retailRef, costRef);
-  const minSpan = pts[pts.length - 1] * 0.14;
-  if (hi - lo < minSpan) { const mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = mid + minSpan / 2; }
-  const pad = (hi - lo) * 0.06;
-  lo -= pad; hi += pad;
-  const x = (i) => (i / (n - 1)) * W;
-  const y = (v) => top + (1 - (v - lo) / (hi - lo)) * (H - top - bottom);
-  const xy = pts.map((v, i) => [x(i), y(v)]);
-  const line = smoothPath(xy);
-  const area = `${line} L${W},${H} L0,${H} Z`;
-  const refY = y(retailRef), costY = y(costRef);
+  const W = 1000, H = 230;
+  const g = chartGeometry(pts, retailRef, costRef, W, H);
+  const { n, xy, refY, costY } = g;
 
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.innerHTML = `
-    <rect class="band" x="0" y="${refY.toFixed(1)}" width="${W}" height="${(costY - refY).toFixed(1)}"/>
-    <path class="area" d="${area}"/>
-    <line class="ref" x1="0" x2="${W}" y1="${refY.toFixed(1)}" y2="${refY.toFixed(1)}"/>
-    <line class="ref cost" x1="0" x2="${W}" y1="${costY.toFixed(1)}" y2="${costY.toFixed(1)}"/>
-    <path class="line" pathLength="1" d="${line}"/>`;
+  svg.innerHTML = chartSVG(g, W, H);
 
   // Restart the draw animation on re-render.
   const lineEl = svg.querySelector('.line');
@@ -665,9 +738,39 @@ function bindChartCursor() {
 
 /* ------------------------------- RENDERERS --------------------------------- */
 
-function renderTicker() {
-  const sorted = [...CARDS].sort((a, b) => Math.abs(deltaPct(b)) - Math.abs(deltaPct(a))).slice(0, 5);
-  document.getElementById('moversList').innerHTML = sorted.map(moverHTML).join('');
+function renderVault() {
+  const sorted = [...CARDS].sort((a, b) => marketValue(b) - marketValue(a));
+  const total = sorted.reduce((s, c) => s + marketValue(c), 0);
+  document.getElementById('vaultNote').textContent = `${sorted.length} cards · ${fmtWhole(total)} at market · sorted by value`;
+  document.getElementById('vaultShelf').innerHTML = sorted.map((card) => {
+    const cls = STATUS_META[getStatus(card)].cls;
+    return `
+    <button class="vault-slot" data-goto="${card.id}" type="button" title="${esc(card.name)}">
+      ${slabSVG(card)}
+      <span class="vault-name">${esc(card.name)}</span>
+      <span class="vault-price">${fmtWhole(card.median)}<i class="${cls}">${pct(deltaPct(card))}</i></span>
+    </button>`;
+  }).join('');
+}
+
+// Market value by category: share bar + rows with 30-day change.
+function renderCategories() {
+  const groups = Object.keys(CATEGORY_META).map((key) => {
+    const cards = CARDS.filter((c) => c.category === key);
+    const now = cards.reduce((s, c) => s + marketValue(c), 0);
+    const then = cards.reduce((s, c) => s + seriesFor(c)[59] * c.qty, 0);
+    return { key, meta: CATEGORY_META[key], cards, now, change: then ? ((now - then) / then) * 100 : 0 };
+  }).filter((g) => g.cards.length).sort((a, b) => b.now - a.now);
+  const total = groups.reduce((s, g) => s + g.now, 0) || 1;
+
+  document.getElementById('catBar').innerHTML = groups.map((g) => `<span style="width:${((g.now / total) * 100).toFixed(1)}%;background:${g.meta.color}" title="${g.meta.label}"></span>`).join('');
+  document.getElementById('catList').innerHTML = groups.map((g) => `
+    <div class="cat-row">
+      <i class="cat-swatch" style="background:${g.meta.color}"></i>
+      <span class="cat-name">${g.meta.label}<small>${g.cards.length} card${g.cards.length === 1 ? '' : 's'} · ${((g.now / total) * 100).toFixed(0)}%</small></span>
+      <span class="cat-value">${fmtWhole(g.now)}</span>
+      <span class="cat-delta ${trendCls(g.change)}">${pct(g.change)}</span>
+    </div>`).join('');
 }
 
 function renderAttention() {
@@ -781,9 +884,21 @@ function populateSelect(select, includeAll) {
   select.innerHTML = options.join('');
 }
 
+function setExpanded(id) {
+  state.expandedId = state.expandedId === id ? null : id;
+  renderInventory();
+  if (state.expandedId) {
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.card.is-expanded');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+}
+
 function startCardEdit(id) {
   if (state.editingId === id) return;
   state.editingId = id;
+  state.expandedId = null;
   renderInventory();
   requestAnimationFrame(() => {
     const first = document.querySelector('.card.is-editing input, .row.is-editing input');
@@ -922,7 +1037,8 @@ function updateSyncPill() {
 
 function renderAll() {
   renderHero();
-  renderTicker();
+  renderVault();
+  renderCategories();
   renderAttention();
   renderInventory();
   renderAlerts();
@@ -951,6 +1067,8 @@ function jumpToCard(id) {
   state.search = card.sku;
   state.category = 'all';
   state.status = 'all';
+  state.expandedId = id;
+  state.editingId = null;
   document.getElementById('inventorySearch').value = card.sku;
   document.getElementById('globalSearch').value = '';
   document.getElementById('filterCategory').value = 'all';
@@ -1115,11 +1233,29 @@ function bindEvents() {
     const editBtn = e.target.closest('[data-edit]');
     if (editBtn) { startCardEdit(editBtn.dataset.edit); return; }
     const doneBtn = e.target.closest('[data-done-edit]');
-    if (doneBtn) { stopCardEdit(); }
+    if (doneBtn) { stopCardEdit(); return; }
+    const reviewBtn = e.target.closest('[data-toggle-reviewed]');
+    if (reviewBtn) {
+      const id = reviewBtn.dataset.toggleReviewed;
+      if (state.reviewed.has(id)) state.reviewed.delete(id); else state.reviewed.add(id);
+      renderInventory(); renderAlerts(); updateNavBadges();
+      return;
+    }
+    if (e.target.closest('[data-close-expand]')) { setExpanded(state.expandedId); return; }
+    // Clicking a tile (anywhere that isn't a control) expands it in place.
+    const tile = e.target.closest('.card');
+    if (tile && !tile.classList.contains('is-editing') && !e.target.closest('button, input, select, a, label')) {
+      if (window.getSelection && String(window.getSelection()).length) return;
+      setExpanded(tile.dataset.id);
+    }
   });
   document.getElementById('tab-inventory').addEventListener('input', handleInlineEditInput);
   document.getElementById('tab-inventory').addEventListener('change', handleInlineEditInput);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.editingId) stopCardEdit(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (state.editingId) stopCardEdit();
+    else if (state.expandedId) setExpanded(state.expandedId);
+  });
 
   // edit all → spreadsheet
   document.getElementById('editAllBtn').addEventListener('click', enterSheetMode);
@@ -1141,6 +1277,11 @@ function bindEvents() {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !accountDropdown.hidden) closeAccountMenu(); });
   accountDropdown.addEventListener('click', (e) => { if (e.target.closest('[data-tab-link]')) closeAccountMenu(); });
   document.getElementById('logoutBtn').addEventListener('click', () => { closeAccountMenu(); showToast('Log out is not wired up in this prototype.'); });
+
+  // vault shelf scrolling
+  const shelf = document.getElementById('vaultShelf');
+  document.getElementById('vaultPrev').addEventListener('click', () => shelf.scrollBy({ left: -shelf.clientWidth * 0.8, behavior: 'smooth' }));
+  document.getElementById('vaultNext').addEventListener('click', () => shelf.scrollBy({ left: shelf.clientWidth * 0.8, behavior: 'smooth' }));
 
   // overview: jump to card
   document.getElementById('tab-overview').addEventListener('click', (e) => {

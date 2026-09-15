@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=12" />
 </head>
 <body>
 
@@ -205,6 +205,18 @@
             <div class="stat-row" id="statRow"></div>
           </section>
 
+          <section class="surface vault" aria-label="Your collection">
+            <div class="surface-head">
+              <h2>Your vault</h2>
+              <span class="surface-note" id="vaultNote">—</span>
+              <div class="vault-nav">
+                <button class="icon-btn" id="vaultPrev" type="button" aria-label="Scroll left"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button class="icon-btn" id="vaultNext" type="button" aria-label="Scroll right"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              </div>
+            </div>
+            <div class="vault-shelf" id="vaultShelf"></div>
+          </section>
+
           <div class="overview-split">
             <section class="surface">
               <div class="surface-head">
@@ -217,10 +229,11 @@
             <div class="overview-side">
               <section class="surface">
                 <div class="surface-head">
-                  <h2>Top movers</h2>
-                  <span class="surface-note">Biggest gap to retail</span>
+                  <h2>By category</h2>
+                  <span class="surface-note">Share of market value</span>
                 </div>
-                <div class="movers" id="moversList"></div>
+                <div class="cat-bar" id="catBar"></div>
+                <div class="cat-list" id="catList"></div>
               </section>
 
               <section class="surface">
@@ -599,6 +612,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>
