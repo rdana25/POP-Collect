@@ -1,73 +1,591 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#081525" />
-    <title>Card Margin Monitor</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <a class="brand" href="#dashboard" aria-label="Card Margin Monitor home">
-          <span>Card<span class="brand-slash">/</span>Margin</span>
-        </a>
-        <p class="store-switcher">COLLECTOR'S VAULT <span>⌄</span></p>
-        <nav aria-label="Primary navigation">
-          <a class="nav-link active" href="#dashboard">Home</a>
-          <a class="nav-link" href="#cards">Inventory <b>184</b></a>
-          <a class="nav-link" href="#alerts">Alerts <b class="alert-badge">12</b></a>
-          <a class="nav-link" href="#history">Market</a>
-        </nav>
-        <div class="plan-card">
-          <span class="plan-dot"></span>
-          <p>Pro plan</p>
-          <strong>184 <small>/ 800 cards</small></strong>
-          <div class="usage"><i></i></div>
-          <button type="button" id="managePlan">Manage plan</button>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#F4F5F9" />
+  <title>Cardline — Margin &amp; market monitor</title>
+  <meta name="description" content="Sync Shopify card inventory with live eBay sold prices, track margin in real time, and catch pricing alerts before they cost you." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='2' width='20' height='28' rx='4' fill='%230E1220'/%3E%3Crect x='10' y='6' width='12' height='4' rx='1' fill='%23fff' opacity='.9'/%3E%3Cpath d='M11 22l3.5-4 2.5 2.5 4.5-5.5' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=4" />
+</head>
+<body>
+
+  <!-- Shared SVG resources (slab sheen + card highlight) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="slab-shine" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
+        <stop offset=".45" stop-color="#fff" stop-opacity=".08"/>
+        <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="slab-sheen" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+        <stop offset=".5" stop-color="#fff" stop-opacity=".7"/>
+        <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="hero-fill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2E5BFF" stop-opacity=".16"/>
+        <stop offset="1" stop-color="#2E5BFF" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="spark-up" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12A150" stop-opacity=".22"/><stop offset="1" stop-color="#12A150" stop-opacity="0"/></linearGradient>
+      <linearGradient id="spark-down" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E5484D" stop-opacity=".2"/><stop offset="1" stop-color="#E5484D" stop-opacity="0"/></linearGradient>
+      <linearGradient id="spark-flat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A2A8BC" stop-opacity=".22"/><stop offset="1" stop-color="#A2A8BC" stop-opacity="0"/></linearGradient>
+      <!-- Category tints for slab art. Muted on purpose: status colors stay reserved. -->
+      <linearGradient id="cat-pokemon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F2C94C"/><stop offset="1" stop-color="#3B7DD8"/></linearGradient>
+      <linearGradient id="cat-basketball" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F08A4B"/><stop offset="1" stop-color="#B4472B"/></linearGradient>
+      <linearGradient id="cat-baseball" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2F4A8A"/><stop offset="1" stop-color="#C24A4A"/></linearGradient>
+      <linearGradient id="cat-mtg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6B4FBB"/><stop offset="1" stop-color="#2C2A4A"/></linearGradient>
+      <linearGradient id="cat-yugioh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B5E34"/><stop offset="1" stop-color="#3B2A1A"/></linearGradient>
+    </defs>
+  </svg>
+
+  <div class="app">
+
+    <!-- ============================ RAIL ============================ -->
+    <aside class="rail" aria-label="Sidebar">
+      <a class="brand" href="#" aria-label="Cardline home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+            <rect x="6" y="2" width="20" height="28" rx="4.5" fill="currentColor"/>
+            <rect x="10.5" y="6" width="11" height="3.6" rx="1" fill="#fff" opacity=".92"/>
+            <path d="M11 22.5l3.6-4.2 2.6 2.6 4.8-5.9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="brand-name">Cardline</span>
+      </a>
+
+      <button class="store" id="storeSwitcher" type="button">
+        <span class="store-avatar" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="9" fill="#141A2E"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#E8C872" stroke-width="1.6"/><circle cx="16" cy="16" r="3.1" fill="none" stroke="#E8C872" stroke-width="1.6"/><path d="M16 4.8v2.7M16 24.5v2.7M4.8 16h2.7M24.5 16h2.7" stroke="#E8C872" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </span>
+        <span class="store-text">
+          <span class="store-name">Vintage Vault Cards</span>
+          <span class="store-domain">vintage-vault.myshopify.com</span>
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <nav class="nav" aria-label="Primary">
+        <button class="nav-item is-active" data-tab="overview" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M3 3v16a2 2 0 0 0 2 2h16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m19 9-5 5-4-4-3 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Overview</span>
+        </button>
+        <button class="nav-item" data-tab="inventory" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Inventory</span>
+          <span class="nav-count" id="navInventoryCount">—</span>
+        </button>
+        <button class="nav-item" data-tab="alerts" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M10.268 21a2 2 0 0 0 3.464 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Alerts</span>
+          <span class="nav-badge" id="navAlertsBadge">0</span>
+        </button>
+        <button class="nav-item" data-tab="sync" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Sync &amp; integrations</span>
+        </button>
+      </nav>
+
+      <div class="rail-foot">
+        <button class="plan-widget" data-tab-link="billing" type="button">
+          <svg class="ring" viewBox="0 0 40 40" aria-hidden="true">
+            <circle class="ring-track" cx="20" cy="20" r="16"/>
+            <circle class="ring-fill" id="planRing" cx="20" cy="20" r="16" pathLength="100"/>
+          </svg>
+          <span class="plan-widget-text">
+            <span class="plan-widget-count" id="planMeterLabel">—</span>
+            <span class="plan-widget-label">cards on your plan</span>
+          </span>
+          <svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ============================ MAIN ============================ -->
+    <div class="main">
+      <header class="topbar">
+        <span class="topbar-progress" aria-hidden="true"></span>
+        <label class="search" for="globalSearch">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input id="globalSearch" type="text" placeholder="Search cards, sets, SKUs" autocomplete="off" />
+          <kbd>/</kbd>
+        </label>
+
+        <div class="topbar-actions">
+          <span class="sync-pill" id="syncPill">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12.2l2.4 2.4 4.6-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="syncPillText">Synced 4 min ago</span>
+          </span>
+          <button class="btn btn-ink" id="syncNowBtn" type="button">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Sync now</span>
+          </button>
+          <button class="icon-btn" id="notifBtn" type="button" aria-label="Alerts">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M10.268 21a2 2 0 0 0 3.464 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="icon-btn-count" id="notifDot">0</span>
+          </button>
+          <div class="account-menu" id="accountMenu">
+            <button class="avatar-trigger" id="avatarBtn" type="button" aria-haspopup="true" aria-expanded="false">
+              <span class="avatar"><img src="https://randomuser.me/api/portraits/men/32.jpg" alt="" width="34" height="34"></span>
+            </button>
+            <div class="menu" id="accountDropdown" hidden>
+              <div class="menu-head">
+                <span class="account-name">Riccardo Dana</span>
+                <span class="account-email">riccardo@vintage-vault.com</span>
+              </div>
+              <button class="menu-item" data-tab-link="settings" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.75"/></svg>
+                <span>Account settings</span>
+              </button>
+              <button class="menu-item" data-tab-link="billing" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><rect x="3.5" y="6" width="17" height="12" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10.5h17" stroke="currentColor" stroke-width="1.6"/></svg>
+                <span>Plan &amp; billing</span>
+              </button>
+              <div class="menu-divider"></div>
+              <button class="menu-item" id="logoutBtn" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Log out</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="account"><span class="avatar">RD</span><span><strong>Riccardo D.</strong><small>Store owner</small></span><button aria-label="Account menu">•••</button></div>
-      </aside>
+      </header>
 
-      <main id="dashboard">
-        <header>
-          <div><p class="date">CARD MARKET INTELLIGENCE · LIVE</p><h1>Your card market<br /><span>command center.</span></h1><p class="subtitle">Track sold-market values, protect every margin, and know exactly what needs a move.</p></div>
-          <div class="header-actions"><span class="sync-status"><i></i> Last synced 8:12 AM</span><button class="refresh" id="refreshPrices">↻ <span>Refresh prices</span></button></div>
-        </header>
+      <main class="content">
 
-        <div class="ticker" aria-label="Live market ticker"><span>CHARIZARD ex #199 <b>$462.00</b> <i>+8.1%</i></span><span>LUGIA V #186 <b>$315.50</b> <i>+4.2%</i></span><span>UMBREON VMAX #215 <b>$716.00</b> <em>-2.6%</em></span><span>MEW ex #193 <b>$386.00</b> <i>+1.4%</i></span></div>
+        <!-- ------------------------ OVERVIEW ------------------------ -->
+        <section class="tab-panel is-active" id="tab-overview">
+          <div class="page-head">
+            <div>
+              <h1>Overview</h1>
+              <p>Your inventory against the live eBay market.</p>
+            </div>
+          </div>
 
-        <section class="market-strip" aria-label="Market summary">
-          <div><span>Portfolio market value</span><strong>$48,260.50</strong><small class="positive">↑ 3.4% <em>over 7 days</em></small></div>
-          <div><span>Estimated inventory cost</span><strong>$36,184.80</strong><small>Across 184 tracked cards</small></div>
-          <div><span>Unrealized margin</span><strong>24.99%</strong><small class="positive">↑ 1.8 pts <em>since last week</em></small></div>
-          <div class="sync-tile"><span>Next scan</span><strong>8:00 PM</strong><small>Pro plan · twice daily</small></div>
+          <section class="hero surface">
+            <div class="hero-top">
+              <div class="hero-headline">
+                <span class="hero-label">Portfolio market value</span>
+                <div class="hero-value-row">
+                  <span class="hero-value num" id="heroValue">—</span>
+                  <span class="delta-chip" id="heroDelta">—</span>
+                </div>
+                <span class="hero-sub" id="heroSub">—</span>
+              </div>
+              <div class="segmented" role="group" aria-label="Chart range" id="chartRange">
+                <button type="button" data-range="7" aria-pressed="false">7D</button>
+                <button type="button" data-range="30" aria-pressed="true">30D</button>
+                <button type="button" data-range="90" aria-pressed="false">90D</button>
+              </div>
+            </div>
+
+            <div class="chart" id="heroChart">
+              <svg class="chart-svg" preserveAspectRatio="none" aria-hidden="true"></svg>
+              <div class="chart-labels" id="chartLabels"></div>
+              <div class="chart-cursor" id="chartCursor" hidden>
+                <div class="chart-cursor-line"></div>
+                <div class="chart-cursor-dot"></div>
+                <div class="chart-tip">
+                  <span class="chart-tip-date"></span>
+                  <span class="chart-tip-value num"></span>
+                  <span class="chart-tip-sub"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-row" id="statRow"></div>
+          </section>
+
+          <div class="ticker" aria-label="Market ticker"><div class="ticker-track" id="tickerStrip"></div></div>
+
+          <div class="overview-split">
+            <section class="surface">
+              <div class="surface-head">
+                <h2>Needs attention</h2>
+                <button class="link-btn" data-tab-link="alerts" type="button">All alerts</button>
+              </div>
+              <div class="attention-list" id="attentionList"></div>
+            </section>
+
+            <section class="surface">
+              <div class="surface-head">
+                <h2>Recent activity</h2>
+                <button class="link-btn" data-tab-link="sync" type="button">Sync settings</button>
+              </div>
+              <ol class="activity-list" id="activityList"></ol>
+            </section>
+          </div>
         </section>
 
-        <section class="focus-head"><div><p class="eyebrow">Needs review</p><h2>Market movements</h2></div><button class="text-button" id="viewAll">View all alerts <span>→</span></button></section>
-        <section class="alert-grid" id="alerts">
-          <article class="alert-card increase"><div class="alert-icon">↗</div><div class="alert-title"><p>PRICE INCREASE OPPORTUNITY</p><span>7 cards</span></div><h3>Capture an estimated <strong>$1,246</strong> in upside</h3><p>Recent eBay sales have moved above your current retail prices.</p><button type="button" data-filter="increase">Review opportunities <span>→</span></button></article>
-          <article class="alert-card warning"><div class="alert-icon">!</div><div class="alert-title"><p>MARGIN LOSS WARNING</p><span>5 cards</span></div><h3><strong>$582</strong> of inventory at or below cost</h3><p>These cards need a pricing or holding decision before the next scan.</p><button type="button" data-filter="warning">Review warnings <span>→</span></button></article>
+        <!-- ------------------------ INVENTORY ------------------------ -->
+        <section class="tab-panel" id="tab-inventory">
+          <div class="page-head">
+            <div>
+              <h1>Inventory</h1>
+              <p id="resultsCount">—</p>
+            </div>
+            <button class="btn btn-ghost" id="editAllBtn" type="button">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none"><rect x="3.5" y="4.5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M9 4.5v15M14.5 4.5v15" stroke="currentColor" stroke-width="1.6"/></svg>
+              <span>Edit all</span>
+            </button>
+          </div>
+
+          <div class="toolbar">
+            <label class="search search-inline" for="inventorySearch">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <input id="inventorySearch" type="text" placeholder="Filter by card, set, or SKU" autocomplete="off" />
+            </label>
+            <div class="toolbar-filters">
+              <span class="select-wrap"><select id="filterCategory" class="select"></select></span>
+              <span class="select-wrap">
+                <select id="filterStatus" class="select">
+                  <option value="all">All statuses</option>
+                  <option value="gain">Opportunities</option>
+                  <option value="risk">At risk</option>
+                  <option value="stable">Stable</option>
+                </select>
+              </span>
+              <span class="select-wrap">
+                <select id="sortBy" class="select">
+                  <option value="delta-desc">Sort: Δ vs retail, high to low</option>
+                  <option value="delta-asc">Sort: Δ vs retail, low to high</option>
+                  <option value="margin-desc">Sort: market margin</option>
+                  <option value="value-desc">Sort: market value</option>
+                  <option value="name-asc">Sort: name A–Z</option>
+                </select>
+              </span>
+            </div>
+            <div class="segmented" role="group" aria-label="Card view">
+              <button type="button" id="viewGridBtn" aria-pressed="true" aria-label="Grid view">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+              </button>
+              <button type="button" id="viewListBtn" aria-pressed="false" aria-label="List view">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="card-grid" id="cardGrid"></div>
+
+          <div class="list surface" id="cardList" hidden>
+            <div class="list-scroll">
+              <div class="list-head">
+                <span>Card</span>
+                <span>Ticker</span>
+                <span class="r">Cost</span>
+                <span class="r">Market</span>
+                <span class="r">Retail</span>
+                <span class="r">Value</span>
+                <span class="r">Margin</span>
+                <span class="r">Δ retail</span>
+                <span class="r">P&amp;L</span>
+                <span>Status</span>
+                <span></span>
+              </div>
+              <div id="cardListBody"></div>
+            </div>
+          </div>
+
+          <div class="empty" id="emptyState" hidden>
+            <svg viewBox="0 0 48 48" width="44" height="44" fill="none"><rect x="14" y="6" width="20" height="28" rx="4" stroke="currentColor" stroke-width="1.6"/><path d="M19 12h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M10 40h28" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".4"/></svg>
+            <h3>No cards match those filters</h3>
+            <p>Clear the search or set status back to all.</p>
+            <button class="btn btn-ghost" id="clearFiltersBtn" type="button">Clear filters</button>
+          </div>
+
+          <!-- Bulk edit spreadsheet -->
+          <div class="sheet" id="sheetView" hidden>
+            <div class="sheet-bar">
+              <span class="sheet-hint">Editing every card. Tab moves between cells; changes save as you type.</span>
+              <button class="btn btn-ink btn-sm" id="doneEditingBtn" type="button">Done</button>
+            </div>
+            <div class="sheet-scroll surface">
+              <table class="sheet-table" id="sheetTable">
+                <thead>
+                  <tr>
+                    <th class="sheet-rownum"></th>
+                    <th>Card</th>
+                    <th>Set</th>
+                    <th>Category</th>
+                    <th>Grade</th>
+                    <th>SKU</th>
+                    <th class="r">Qty</th>
+                    <th class="r">Cost</th>
+                    <th class="r">Retail</th>
+                    <th class="r">Market</th>
+                    <th class="r">Margin</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="sheetBody"></tbody>
+              </table>
+            </div>
+          </div>
         </section>
 
-        <section class="table-section" id="cards">
-          <div class="table-head"><div><p class="eyebrow">Latest signals</p><h2>Cards to action</h2></div><div class="filters"><button class="filter active" data-filter="all">All <b>12</b></button><button class="filter" data-filter="increase">Price increases <b>7</b></button><button class="filter" data-filter="warning">Margin warnings <b>5</b></button></div></div>
-          <div class="data-wrap"><table><thead><tr><th>Card</th><th>eBay median <small>Last 5 sales</small></th><th>Your retail / cost</th><th>Market signal</th><th><span class="sr-only">Actions</span></th></tr></thead>
-            <tbody id="cardRows">
-              <tr data-kind="increase"><td><div class="card-name"><div class="card-art pikachu">⚡</div><div><strong>Charizard ex #199</strong><small>Obsidian Flames · PSA 10</small></div></div></td><td><strong>$462.00</strong><small>5 sales · Sep 6</small></td><td><strong>$389.00</strong><small>Cost $210.00</small></td><td><span class="signal up">↑ $73.00 <small>18.8% above retail</small></span></td><td><button class="row-action" data-name="Charizard ex #199">Review</button></td></tr>
-              <tr data-kind="increase"><td><div class="card-name"><div class="card-art lugia">◈</div><div><strong>Lugia V #186</strong><small>Silver Tempest · PSA 10</small></div></div></td><td><strong>$315.50</strong><small>4 sales · Sep 7</small></td><td><strong>$270.00</strong><small>Cost $164.00</small></td><td><span class="signal up">↑ $45.50 <small>16.9% above retail</small></span></td><td><button class="row-action" data-name="Lugia V #186">Review</button></td></tr>
-              <tr data-kind="warning"><td><div class="card-name"><div class="card-art moon">☾</div><div><strong>Umbreon VMAX #215</strong><small>Evolving Skies · BGS 9.5</small></div></div></td><td><strong>$716.00</strong><small>5 sales · Sep 7</small></td><td><strong>$799.00</strong><small>Cost $735.00</small></td><td><span class="signal down">↓ $19.00 <small>2.6% below cost</small></span></td><td><button class="row-action" data-name="Umbreon VMAX #215">Review</button></td></tr>
-              <tr data-kind="warning"><td><div class="card-name"><div class="card-art mew">✦</div><div><strong>Mew ex #193</strong><small>151 · PSA 10</small></div></div></td><td><strong>$386.00</strong><small>3 sales · Sep 6</small></td><td><strong>$410.00</strong><small>Cost $392.00</small></td><td><span class="signal down">↓ $6.00 <small>1.5% below cost</small></span></td><td><button class="row-action" data-name="Mew ex #193">Review</button></td></tr>
-            </tbody></table></div>
+        <!-- ------------------------ ALERTS ------------------------ -->
+        <section class="tab-panel" id="tab-alerts">
+          <div class="page-head">
+            <div>
+              <h1>Alerts</h1>
+              <p>Price opportunities and margin warnings from the latest sync.</p>
+            </div>
+          </div>
+          <div class="chips" id="alertFilterChips">
+            <button class="chip is-active" data-filter="all" type="button">All</button>
+            <button class="chip" data-filter="gain" type="button">Opportunities</button>
+            <button class="chip" data-filter="risk" type="button">Margin warnings</button>
+            <button class="chip" data-filter="reviewed" type="button">Reviewed</button>
+          </div>
+          <div class="alert-feed" id="alertFeed"></div>
         </section>
+
+        <!-- ------------------------ SYNC ------------------------ -->
+        <section class="tab-panel" id="tab-sync">
+          <div class="page-head">
+            <div>
+              <h1>Sync &amp; integrations</h1>
+              <p>Where your inventory and prices come from, and where alerts go.</p>
+            </div>
+          </div>
+
+          <div class="connections">
+            <section class="surface connection">
+              <div class="connection-head">
+                <span class="connection-mark shopify" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="22" height="22"><path d="M17.4 6.2c0-.1-.1-.2-.2-.2l-1.6-.1-1.2-1.2c-.1-.1-.3-.1-.4-.1l-.6.2C13 3.5 12.1 2.5 10.9 2.5c-2.3 0-3.5 2.9-3.9 4.4l-1.8.6c-.5.2-.6.2-.6.7L3.3 19.7l10.2 1.9 5.5-1.2-1.6-14.2zM12.5 5l-1.3.4c0-.7-.1-1.6-.5-2.1.9.2 1.5 1 1.8 1.7zm-1.9-1.8c.4.4.5 1.4.5 2.5l-2.5.8c.4-1.6 1.2-2.9 2-3.3zM9.4 4.5c.1 0 .2 0 .3.1-.9.6-1.6 1.9-1.9 3.6l-1.7.5c.5-1.6 1.6-4.2 3.3-4.2z" fill="#95BF47"/><path d="M17.2 6c-.1 0-.2.1-.2.2l-.2.1-1.3 14.6 5.5-1.2-1.6-14.2c-.1-.1-.2-.1-.2-.1L17.2 6z" fill="#5E8E3E"/><path d="M12.6 8.6l-.6 2c-.5-.2-1-.4-1.6-.4-1.3 0-1.3.8-1.3 1 0 1.1 2.9 1.5 2.9 4.1 0 2.1-1.3 3.4-3.1 3.4-2.1 0-3.2-1.3-3.2-1.3l.6-1.9s1.1.9 2 .9c.6 0 .8-.5.8-.8 0-1.4-2.4-1.5-2.4-3.9 0-2 1.5-4 4.4-4 1.1 0 1.5.9 1.5.9z" fill="#fff"/></svg>
+                </span>
+                <div class="connection-title">
+                  <h3>Shopify</h3>
+                  <p>vintage-vault.myshopify.com</p>
+                </div>
+                <span class="status-ok"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12.3 2.3 2.3 4.7-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Connected</span>
+              </div>
+              <dl class="kv">
+                <div><dt>Scopes</dt><dd class="mono">read_products, read_inventory</dd></div>
+                <div><dt>Products mapped</dt><dd id="metaMapped">—</dd></div>
+                <div><dt>Last product sync</dt><dd>4 minutes ago</dd></div>
+              </dl>
+              <button class="btn btn-ghost btn-sm" type="button">Reauthorize</button>
+            </section>
+
+            <section class="surface connection">
+              <div class="connection-head">
+                <span class="connection-mark ebay" aria-hidden="true">
+                  <svg viewBox="0 0 52 24" width="40" height="18"><text x="0" y="19" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" letter-spacing="-1"><tspan fill="#E53238">e</tspan><tspan fill="#0064D2">b</tspan><tspan fill="#F5AF02">a</tspan><tspan fill="#86B817">y</tspan></text></svg>
+                </span>
+                <div class="connection-title">
+                  <h3>eBay Marketplace Insights</h3>
+                  <p>Sold-listing data for median pricing</p>
+                </div>
+                <span class="status-ok"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12.3 2.3 2.3 4.7-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Connected</span>
+              </div>
+              <dl class="kv">
+                <div><dt>Sample window</dt><dd>Last 3–5 sold listings</dd></div>
+                <div><dt>Sync frequency</dt><dd>Every 2 hours</dd></div>
+                <div><dt>Last price sync</dt><dd id="metaLastSync">—</dd></div>
+              </dl>
+              <button class="btn btn-ghost btn-sm" type="button">Test connection</button>
+            </section>
+          </div>
+
+          <section class="surface">
+            <div class="surface-head">
+              <h2>Alert destinations</h2>
+              <span class="surface-note">Where price and margin alerts are delivered</span>
+            </div>
+            <div class="destinations">
+              <div class="destination">
+                <span class="destination-icon brand-mail"><svg viewBox="0 0 24 24" width="18" height="18" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 7.5l8 5.5 8-5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="destination-text"><span class="destination-label">Email</span><span class="destination-detail">riccardo@vintage-vault.com</span></span>
+                <button class="switch is-on" role="switch" aria-checked="true" type="button" aria-label="Email alerts"></button>
+              </div>
+              <div class="destination">
+                <span class="destination-icon brand-slack"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M5.6 15.1a2 2 0 11-2-2h2v2zm1 0a2 2 0 014 0v5a2 2 0 11-4 0v-5z" fill="#E01E5A"/><path d="M8.9 5.6a2 2 0 112-2v2h-2zm0 1a2 2 0 010 4h-5a2 2 0 110-4h5z" fill="#36C5F0"/><path d="M18.4 8.9a2 2 0 112 2h-2v-2zm-1 0a2 2 0 01-4 0v-5a2 2 0 114 0v5z" fill="#2EB67D"/><path d="M15.1 18.4a2 2 0 11-2 2v-2h2zm0-1a2 2 0 010-4h5a2 2 0 110 4h-5z" fill="#ECB22E"/></svg></span>
+                <span class="destination-text"><span class="destination-label">Slack, #card-pricing</span><span class="destination-detail">Webhook connected</span></span>
+                <button class="switch is-on" role="switch" aria-checked="true" type="button" aria-label="Slack alerts"></button>
+              </div>
+              <div class="destination">
+                <span class="destination-icon brand-discord"><svg viewBox="0 0 24 24" width="19" height="19"><path d="M19.6 5.3A17 17 0 0015.4 4l-.2.4a15.6 15.6 0 00-6.4 0L8.6 4a17 17 0 00-4.2 1.3C1.7 9.3 1 13.2 1.4 17a17 17 0 005.2 2.6l1.1-1.8a11 11 0 01-1.7-.8l.4-.3a12.2 12.2 0 0011.2 0l.4.3-1.7.8 1.1 1.8a17 17 0 005.2-2.6c.5-4.4-.8-8.3-3-11.7zM8.7 14.7c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1c1 0 1.9 1 1.9 2.1s-.9 2.1-1.9 2.1zm6.6 0c-1 0-1.9-.9-1.9-2.1s.8-2.1 1.9-2.1c1 0 1.9 1 1.9 2.1s-.8 2.1-1.9 2.1z" fill="#5865F2"/></svg></span>
+                <span class="destination-text"><span class="destination-label">Discord</span><span class="destination-detail">Not connected</span></span>
+                <button class="switch" role="switch" aria-checked="false" type="button" aria-label="Discord alerts"></button>
+              </div>
+            </div>
+          </section>
+
+          <section class="surface">
+            <div class="surface-head">
+              <h2>Sync log</h2>
+              <span class="surface-note">Latest scheduled and manual runs</span>
+            </div>
+            <div class="sync-log" id="syncLog"></div>
+          </section>
+        </section>
+
+        <!-- ------------------------ BILLING ------------------------ -->
+        <section class="tab-panel" id="tab-billing">
+          <div class="page-head">
+            <div>
+              <h1>Plan &amp; billing</h1>
+              <p>Size your plan to how many cards you list.</p>
+            </div>
+          </div>
+
+          <section class="surface current-plan">
+            <div class="current-plan-info">
+              <span class="eyebrow">Current plan</span>
+              <h2 id="currentPlanHeading">—</h2>
+              <p id="currentPlanSub">—</p>
+            </div>
+            <div class="current-plan-usage">
+              <div class="usage-label"><span>Tracked cards</span><span class="num" id="usageSkuLabel">—</span></div>
+              <div class="meter"><div class="meter-fill" id="usageSkuFill"></div></div>
+              <p class="usage-note" id="usageNote">—</p>
+            </div>
+            <button class="btn btn-ghost" type="button">Manage billing</button>
+          </section>
+
+          <section class="surface plan-picker">
+            <div class="surface-head">
+              <h2>Choose your plan</h2>
+              <span class="surface-note">Drag to size the plan to your card count</span>
+            </div>
+            <div class="plan-readout">
+              <span class="plan-price num" id="planReadoutPrice">—</span>
+              <span class="plan-limit" id="planReadoutLimit">—</span>
+            </div>
+            <div class="slider-wrap">
+              <input type="range" class="slider" id="planSlider" min="0" max="8" step="1" value="7" aria-label="Plan tier by card capacity">
+              <div class="slider-ticks" id="planSliderTicks"></div>
+            </div>
+            <ul class="features">
+              <li>Live eBay sold-price sync</li>
+              <li>Price-opportunity and margin-loss alerts</li>
+              <li>Email, Slack and Discord delivery</li>
+            </ul>
+            <div class="plan-foot">
+              <span class="plan-hint">Every plan tracks all your cards. Pick the tier that matches how many you list.</span>
+              <button class="btn btn-ink" id="planSwitchBtn" type="button">—</button>
+            </div>
+          </section>
+        </section>
+
+        <!-- ------------------------ SETTINGS ------------------------ -->
+        <section class="tab-panel" id="tab-settings">
+          <div class="page-head">
+            <div>
+              <h1>Account settings</h1>
+              <p>Registration details, profile, password and currency.</p>
+            </div>
+          </div>
+
+          <section class="surface">
+            <div class="surface-head">
+              <h2>Business registration</h2>
+              <span class="surface-note">Used on invoices and tax documents</span>
+            </div>
+            <form class="form" id="registrationForm">
+              <div class="form-row">
+                <label class="field">Legal business name<input type="text" id="regBusinessName" value="Vintage Vault Cards LLC" required></label>
+                <label class="field">Tax / VAT ID<input type="text" id="regTaxId" value="US-84-3021557" required></label>
+              </div>
+              <div class="form-row">
+                <label class="field">Business address<input type="text" id="regAddress" value="221 Baker Street, Suite 4B, Chicago, IL" required></label>
+                <label class="field">Country
+                  <span class="select-wrap"><select id="regCountry">
+                    <option value="US" selected>United States</option>
+                    <option value="CA">Canada</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="AU">Australia</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="IT">Italy</option>
+                    <option value="JP">Japan</option>
+                  </select></span>
+                </label>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn btn-ink">Save registration</button></div>
+            </form>
+          </section>
+
+          <section class="surface">
+            <div class="surface-head">
+              <h2>Account</h2>
+              <span class="surface-note">Your profile on this store</span>
+            </div>
+            <form class="form" id="accountForm">
+              <div class="form-row">
+                <label class="field">Full name<input type="text" id="acctName" value="Riccardo Dana" required></label>
+                <label class="field">Email<input type="email" id="acctEmail" value="riccardo@vintage-vault.com" required></label>
+              </div>
+              <div class="form-row">
+                <label class="field">Role<input type="text" id="acctRole" value="Store owner" disabled></label>
+                <label class="field">Store<input type="text" id="acctStore" value="vintage-vault.myshopify.com" disabled></label>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn btn-ink">Save account</button></div>
+            </form>
+          </section>
+
+          <section class="surface">
+            <div class="surface-head">
+              <h2>Password</h2>
+              <span class="surface-note">Update the password used to sign in</span>
+            </div>
+            <form class="form" id="passwordForm">
+              <div class="form-row">
+                <label class="field">Current password<input type="password" id="pwCurrent" placeholder="••••••••" required></label>
+              </div>
+              <div class="form-row">
+                <label class="field">New password<input type="password" id="pwNew" placeholder="At least 8 characters" minlength="8" required></label>
+                <label class="field">Confirm new password<input type="password" id="pwConfirm" placeholder="Repeat new password" required></label>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn btn-ink">Update password</button></div>
+            </form>
+          </section>
+
+          <section class="surface">
+            <div class="surface-head">
+              <h2>Currency</h2>
+              <span class="surface-note">How prices are shown across the dashboard</span>
+            </div>
+            <div class="form">
+              <label class="field field-narrow">Display currency
+                <span class="select-wrap"><select id="currencySelect"></select></span>
+              </label>
+            </div>
+          </section>
+        </section>
+
       </main>
     </div>
-    <div class="toast" role="status" aria-live="polite" id="toast"></div>
-    <dialog id="reviewDialog"><button class="close-dialog" aria-label="Close">×</button><p class="eyebrow">Card review</p><h2 id="dialogTitle">Card</h2><p>This prototype is ready to connect each action to Shopify pricing and your alert workflow.</p><button class="refresh close-primary">Close</button></dialog>
-    <script src="./app.js"></script>
-  </body>
+  </div>
+
+  <!-- Mobile tab bar -->
+  <nav class="tabbar" aria-label="Primary (mobile)">
+    <button class="tabbar-item is-active" data-tab="overview" type="button">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M3 3v16a2 2 0 0 0 2 2h16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m19 9-5 5-4-4-3 3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Overview</span>
+    </button>
+    <button class="tabbar-item" data-tab="inventory" type="button">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Inventory</span>
+    </button>
+    <button class="tabbar-item" data-tab="alerts" type="button">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M10.268 21a2 2 0 0 0 3.464 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Alerts</span>
+    </button>
+    <button class="tabbar-item" data-tab="sync" type="button">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Sync</span>
+    </button>
+  </nav>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js?v=4"></script>
+</body>
 </html>
