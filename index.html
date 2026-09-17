@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=18" />
+  <link rel="stylesheet" href="styles.css?v=19" />
 </head>
 <body>
 
@@ -45,7 +45,29 @@
     </defs>
   </svg>
 
-  <div class="app">
+  <!-- ====================== LOGIN (real Supabase auth) ====================== -->
+  <div class="login-overlay" id="loginOverlay" hidden>
+    <div class="login-card">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+          <rect x="6" y="2" width="20" height="28" rx="4.5" fill="currentColor"/>
+          <rect x="10.5" y="6" width="11" height="3.6" rx="1" fill="#fff" opacity=".92"/>
+          <path d="M11 22.5l3.6-4.2 2.6 2.6 4.8-5.9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <h1 id="loginTitle">Sign in</h1>
+      <p class="login-sub">Sign in to sync your real Shopify inventory and eBay pricing alerts.</p>
+      <form id="loginForm">
+        <label class="field">Email<input type="email" id="loginEmail" required autocomplete="email"></label>
+        <label class="field">Password<input type="password" id="loginPassword" required autocomplete="current-password" minlength="6"></label>
+        <p class="login-error" id="loginError" hidden></p>
+        <button class="btn btn-ink" type="submit" id="loginSubmitBtn">Sign in</button>
+      </form>
+      <button class="login-toggle" id="loginToggleMode" type="button">Need an account? Sign up</button>
+    </div>
+  </div>
+
+  <div class="app" id="appRoot">
 
     <!-- ============================ RAIL ============================ -->
     <aside class="rail" aria-label="Sidebar">
@@ -381,23 +403,26 @@
           </div>
 
           <div class="connections">
-            <section class="surface connection">
+            <section class="surface connection" id="shopifyConnectionCard">
               <div class="connection-head">
                 <span class="connection-mark shopify" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="22" height="22"><path fill="#95BF47" d="M15.337 23.979l7.216-1.561s-2.604-17.613-2.625-17.73c-.018-.116-.114-.192-.211-.192s-1.929-.136-1.929-.136-1.275-1.274-1.439-1.411c-.045-.037-.075-.057-.121-.074l-.914 21.104h.023zM11.71 11.305s-.81-.424-1.774-.424c-1.447 0-1.504.906-1.504 1.141 0 1.232 3.24 1.715 3.24 4.629 0 2.295-1.44 3.76-3.406 3.76-2.354 0-3.54-1.465-3.54-1.465l.646-2.086s1.245 1.066 2.28 1.066c.675 0 .975-.545.975-.932 0-1.619-2.654-1.694-2.654-4.359-.034-2.237 1.571-4.416 4.827-4.416 1.257 0 1.875.361 1.875.361l-.945 2.715-.02.01zM11.17.83c.136 0 .271.038.405.135-.984.465-2.064 1.639-2.508 3.992-.656.213-1.293.405-1.889.578C7.697 3.75 8.951.84 11.17.84V.83zm1.235 2.949v.135c-.754.232-1.583.484-2.394.736.466-1.777 1.333-2.645 2.085-2.971.193.501.309 1.176.309 2.1zm.539-2.234c.694.074 1.141.867 1.429 1.755-.349.114-.735.231-1.158.366v-.252c0-.752-.096-1.371-.271-1.871v.002zm2.992 1.289c-.02 0-.06.021-.078.021s-.289.075-.714.21c-.423-1.233-1.176-2.37-2.508-2.37h-.115C12.135.209 11.669 0 11.265 0 8.159 0 6.675 3.877 6.21 5.846c-1.194.365-2.063.636-2.16.674-.675.213-.694.232-.772.87-.075.462-1.83 14.063-1.83 14.063L15.009 24l.927-21.166z"/></svg>
                 </span>
                 <div class="connection-title">
                   <h3>Shopify</h3>
-                  <p>vintage-vault.myshopify.com</p>
+                  <p id="shopifyStoreDomain">Not connected</p>
                 </div>
-                <span class="status-ok"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12.3 2.3 2.3 4.7-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Connected</span>
+                <span class="status-ok" id="shopifyStatusBadge" hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12.3 2.3 2.3 4.7-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Connected</span>
               </div>
               <dl class="kv">
                 <div><dt>Scopes</dt><dd class="mono">read_products, read_inventory</dd></div>
                 <div><dt>Products mapped</dt><dd id="metaMapped">—</dd></div>
-                <div><dt>Last product sync</dt><dd>4 minutes ago</dd></div>
+                <div><dt>Last product sync</dt><dd id="shopifyLastSync">Never</dd></div>
               </dl>
-              <button class="btn btn-ghost btn-sm" type="button">Reauthorize</button>
+              <div class="connection-actions">
+                <button class="btn btn-ghost btn-sm" type="button" id="shopifyConnectBtn">Connect store</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="shopifyOAuthBtn">Install app (OAuth)</button>
+              </div>
             </section>
 
             <section class="surface connection">
@@ -613,6 +638,8 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="app.js?v=18"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="backend.js?v=1"></script>
+  <script src="app.js?v=19"></script>
 </body>
 </html>

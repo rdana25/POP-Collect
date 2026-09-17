@@ -1189,6 +1189,41 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   .x-stats .stat:nth-child(even) { padding-left: 16px; box-shadow: inset 1px 0 0 var(--hair); }
 }
 
+/* -------------------------------- LOGIN -------------------------------- */
+/* Real Supabase sign-in gate (backend.js). Shown instead of .app until a
+   session exists; kept visually consistent with the rest of the app
+   (frosted surface, same tokens) rather than a bare unstyled form. */
+
+.login-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: var(--canvas);
+}
+.login-card {
+  width: 100%; max-width: 360px;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 32px 28px 28px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 60px -24px rgba(14, 18, 32, 0.28);
+}
+.login-card .brand-mark { color: var(--ink); margin-bottom: 14px; }
+.login-card h1 { margin: 0 0 6px; font-size: 20px; font-weight: 650; color: var(--ink); }
+.login-sub { margin: 0 0 18px; font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+.login-card form { display: flex; flex-direction: column; gap: 14px; }
+.login-card .btn { width: 100%; margin-top: 4px; }
+.login-error { margin: 0; font-size: 12.5px; font-weight: 500; color: var(--down-ink); }
+.login-toggle {
+  margin: 16px auto 0; padding: 0; border: 0; background: none;
+  font-size: 12.5px; font-weight: 600; color: var(--brand-ink); cursor: pointer;
+}
+.login-toggle:hover { text-decoration: underline; }
+
+/* ----------------------------- CONNECTIONS ------------------------------ */
+
+.connection-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
 /* -------------------------------- MOTION ------------------------------ */
 
 @media (prefers-reduced-motion: reduce) {

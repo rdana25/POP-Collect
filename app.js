@@ -28,6 +28,10 @@ const CATEGORY_META = {
   pokemon: { label: 'Pokémon TCG', grad: 'cat-pokemon', color: '#3B7DD8' },
   mtg: { label: 'Magic: The Gathering', grad: 'cat-mtg', color: '#6B4FBB' },
   yugioh: { label: 'Yu-Gi-Oh!', grad: 'cat-yugioh', color: '#B07A3E' },
+  // Real Shopify products whose category doesn't match a known TCG (see
+  // backend GET /v1/card-watch/inventory) fall back here rather than
+  // breaking the slab/category lookups below.
+  other: { label: 'Other cards', grad: 'cat-mtg', color: '#6F7590' },
 };
 
 // cls drives every colored element: up (opportunity), down (risk), flat (stable).
@@ -49,7 +53,20 @@ const signalHTML = (meta, text) => `<span class="signal ${meta.cls}">${meta.glyp
 const POKE = (set, n) => `https://images.pokemontcg.io/${set}/${n}.png`;
 const YGO = (id) => `https://images.ygoprodeck.com/images/cards_small/${id}.jpg`;
 const SCRY = (path) => `https://cards.scryfall.io/small/front/${path}.jpg`;
-const CARDS = [
+// Populated from the real backend (CardlineBackend.fetchInventory(), see
+// loadRealInventory() near INIT below) once the merchant is signed in and
+// has a connected Shopify store. Starts empty; if the backend/auth fails
+// to load at all, startApp() (near INIT below) falls back to
+// FALLBACK_CARDS below instead of leaving the dashboard blank.
+const CARDS = [];
+
+// Original demo data — used ONLY as a fallback when the real backend can't
+// be reached at all (network error, backend.js failed to load, Supabase
+// unreachable, etc.), so the prototype still has something to show rather
+// than a blank/broken page. NOT shown just because a real, successfully-
+// connected store happens to have zero cards — that's a legitimate state
+// and should read as empty, not fake full.
+const FALLBACK_CARDS = [
   { id: 'chzx-223', name: 'Charizard ex #223', set: 'Obsidian Flames · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'CHZX-223-P10', mono: 'CE', qty: 1, cost: 210, retail: 389, median: 462, lastSoldPrice: 471, sales: 5, lastSoldDate: 'Sep 6', history: [268, 301, 329, 352, 398, 431, 462], image: POKE('sv3', 223) },
   { id: 'umbv-215', name: 'Umbreon VMAX Alt Art #215', set: 'Evolving Skies · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'UMBV-215-P9', mono: 'UV', qty: 1, cost: 735, retail: 799, median: 690, lastSoldPrice: 675, sales: 4, lastSoldDate: 'Sep 7', history: [760, 750, 735, 720, 705, 695, 690], image: POKE('swsh7', 215) },
   { id: 'lugv-186', name: 'Lugia V Alt Art #186', set: 'Silver Tempest · Pokémon TCG', category: 'pokemon', grade: 'PSA 10', sku: 'LUGV-186-P10', mono: 'LV', qty: 2, cost: 164, retail: 270, median: 315.5, lastSoldPrice: 322, sales: 4, lastSoldDate: 'Sep 7', history: [196, 214, 238, 256, 281, 299, 315.5], image: POKE('swsh12', 186) },
@@ -336,7 +353,12 @@ function cardEditFieldsHTML(card) {
 function chartGeometry(pts, retailRef, costRef, W, H, top = 10, bottom = 10) {
   const n = pts.length;
   let lo = Math.min(...pts, retailRef, costRef), hi = Math.max(...pts, retailRef, costRef);
-  const minSpan = pts[n - 1] * 0.14;
+  // Floor of 1: with no cards yet (or a store with $0 median/retail/cost),
+  // pts/retailRef/costRef are all 0, so minSpan would also be 0 and
+  // hi - lo < minSpan (0 < 0) never triggers the widen-range branch below
+  // — leaving hi === lo, which divides by zero in y() and produces NaN
+  // SVG coordinates. A $1 floor keeps the range well-defined either way.
+  const minSpan = Math.max(pts[n - 1] * 0.14, 1);
   if (hi - lo < minSpan) { const mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = mid + minSpan / 2; }
   const pad = (hi - lo) * 0.06;
   lo -= pad; hi += pad;
@@ -628,7 +650,7 @@ function renderHero() {
   const portfolioValue = CARDS.reduce((s, c) => s + marketValue(c), 0);
   const retailValue = CARDS.reduce((s, c) => s + c.retail * c.qty, 0);
   const costValue = CARDS.reduce((s, c) => s + c.cost * c.qty, 0);
-  const avgMargin = CARDS.reduce((s, c) => s + marketMarginPct(c), 0) / total;
+  const avgMargin = total ? CARDS.reduce((s, c) => s + marketMarginPct(c), 0) / total : 0;
   const gainCount = CARDS.filter((c) => getStatus(c) === 'gain').length;
   const riskCount = CARDS.filter((c) => getStatus(c) === 'risk').length;
 
@@ -636,7 +658,7 @@ function renderHero() {
   const pts = series.slice(-state.chartRange);
   const start = pts[0];
   const change = portfolioValue - start;
-  const changePct = (change / start) * 100;
+  const changePct = start ? (change / start) * 100 : 0;
   const cls = trendCls(changePct);
 
   document.getElementById('heroValue').textContent = fmtWhole(portfolioValue);
@@ -645,8 +667,8 @@ function renderHero() {
   chip.innerHTML = `${cls === 'up' ? ICONS.up(11) : cls === 'down' ? ICONS.down(11) : ''}${pct(changePct)}`;
   document.getElementById('heroSub').innerHTML = `<b>${change >= 0 ? '+' : '−'}${fmtWhole(Math.abs(change))}</b> over the last ${state.chartRange} days · ${total} cards at eBay sold median`;
 
-  const vsRetail = ((portfolioValue - retailValue) / retailValue) * 100;
-  const vsCost = ((portfolioValue - costValue) / costValue) * 100;
+  const vsRetail = retailValue ? ((portfolioValue - retailValue) / retailValue) * 100 : 0;
+  const vsCost = costValue ? ((portfolioValue - costValue) / costValue) * 100 : 0;
   const stats = [
     { label: 'Listed at retail', value: fmtWhole(retailValue), sub: `${pct(vsRetail)} market vs retail`, cls: trendCls(vsRetail) },
     { label: 'Cost basis', value: fmtWhole(costValue), sub: `${pct(vsCost)} unrealized`, cls: trendCls(vsCost) },
@@ -1354,9 +1376,11 @@ function bindEvents() {
   document.getElementById('syncNowBtn').addEventListener('click', handleSyncNow);
   document.getElementById('notifBtn').addEventListener('click', () => setActiveTab('alerts'));
   document.getElementById('storeSwitcher').addEventListener('click', () => showToast('Multi-store switching is available on the Enterprise plan.'));
-  document.querySelectorAll('.connection .btn').forEach((btn) => {
-    btn.addEventListener('click', () => showToast(btn.textContent.includes('Reauthorize') ? 'Shopify connection looks good. No action needed.' : 'eBay API test succeeded, 42ms response.'));
-  });
+  // eBay's "Test connection" stays mock — no real eBay data source is wired
+  // up yet (tools/helpers/sold_price_provider ships only a mock provider).
+  document.querySelector('#tab-sync .connection:nth-of-type(2) .btn').addEventListener('click', () => showToast('eBay API test succeeded, 42ms response.'));
+  document.getElementById('shopifyConnectBtn').addEventListener('click', handleShopifyConnectClick);
+  document.getElementById('shopifyOAuthBtn').addEventListener('click', handleShopifyOAuthClick);
   document.querySelector('.destinations').addEventListener('click', (e) => {
     const sw = e.target.closest('.switch');
     if (!sw) return;
@@ -1410,6 +1434,122 @@ function bindEvents() {
   });
 }
 
+/* ------------------------------ REAL BACKEND -------------------------------- */
+/* Real Shopify connect/disconnect + real inventory, via backend.js's
+   CardlineBackend. Everything else in the Sync tab (eBay card, alert
+   destinations, sync log) stays mock for this pass. */
+
+let shopifyConnected = false;
+let usingFallbackData = false;
+
+// Guards the Shopify connect/OAuth buttons: once we've fallen back to
+// static demo data, those actions have nothing real to talk to.
+function backendReady() {
+  return typeof window.CardlineBackend !== 'undefined' && !usingFallbackData;
+}
+
+function useFallbackData(reason) {
+  usingFallbackData = true;
+  console.warn('Cardline: backend unavailable, showing static demo data —', reason);
+  CARDS.length = 0;
+  FALLBACK_CARDS.forEach((c) => CARDS.push(c));
+  document.getElementById('shopifyStatusBadge').hidden = true;
+  document.getElementById('shopifyStoreDomain').textContent = 'Demo data — backend unavailable';
+  document.getElementById('shopifyConnectBtn').textContent = 'Connect store';
+  document.getElementById('shopifyOAuthBtn').hidden = false;
+  renderAll();
+  showToast("Couldn't reach the backend — showing demo data instead.");
+}
+
+function refreshShopifyCard(status) {
+  shopifyConnected = !!(status && status.connected);
+  document.getElementById('shopifyStatusBadge').hidden = !shopifyConnected;
+  document.getElementById('shopifyStoreDomain').textContent = shopifyConnected
+    ? (status.store_url || status.shop_name || 'Connected')
+    : 'Not connected';
+  document.getElementById('shopifyConnectBtn').textContent = shopifyConnected ? 'Disconnect' : 'Connect store';
+  document.getElementById('shopifyOAuthBtn').hidden = shopifyConnected;
+}
+
+async function loadShopifyStatus() {
+  try {
+    const status = await CardlineBackend.fetchShopifyStatus();
+    refreshShopifyCard(status);
+  } catch (err) {
+    console.warn('Could not load Shopify status:', err.message);
+  }
+}
+
+async function loadRealInventory() {
+  try {
+    const cards = await CardlineBackend.fetchInventory();
+    CARDS.length = 0;
+    cards.forEach((c) => CARDS.push(c));
+    renderAll();
+  } catch (err) {
+    console.warn('Could not load inventory from backend:', err.message);
+    showToast(`Could not load inventory: ${err.message}`);
+  }
+}
+
+async function handleShopifyConnectClick() {
+  if (!backendReady()) {
+    showToast("Backend unavailable — you're viewing demo data. Reload once the backend is reachable to connect a real store.");
+    return;
+  }
+  if (shopifyConnected) {
+    if (!confirm('Disconnect your Shopify store?')) return;
+    try {
+      await CardlineBackend.disconnectShopify();
+      showToast('Shopify store disconnected.');
+      await loadShopifyStatus();
+      await loadRealInventory();
+    } catch (err) {
+      showToast(`Disconnect failed: ${err.message}`);
+    }
+    return;
+  }
+
+  // Quick-connect path: a private-app token pasted from the merchant's own
+  // Shopify admin (Settings → Apps → Develop apps) — no Partner app or
+  // public callback URL needed, so this works for local testing today.
+  // The "Install app (OAuth)" button next to this one is the real
+  // installable-app flow (backend/routes/shopify_oauth.py); it needs a
+  // registered Shopify Partner app + a public HTTPS redirect URI, so it
+  // isn't click-testable from a bare localhost checkout yet.
+  const storeUrl = prompt('Shopify store URL (e.g. my-store.myshopify.com):');
+  if (!storeUrl) return;
+  const token = prompt('Shopify Admin API access token (shpat_...):');
+  if (!token) return;
+
+  try {
+    const res = await CardlineBackend.connectShopifyToken(storeUrl.trim(), token.trim());
+    if (!res.ok) { showToast(res.message || 'Connect failed.'); return; }
+    showToast(res.message || 'Shopify store connected.');
+    await CardlineBackend.syncShopifyListings();
+    await loadShopifyStatus();
+    await loadRealInventory();
+  } catch (err) {
+    showToast(`Connect failed: ${err.message}`);
+  }
+}
+
+async function handleShopifyOAuthClick() {
+  if (!backendReady()) {
+    showToast("Backend unavailable — you're viewing demo data. Reload once the backend is reachable to install the app.");
+    return;
+  }
+  const shop = prompt('Shopify store domain to install on (e.g. my-store.myshopify.com):');
+  if (!shop) return;
+  try {
+    await CardlineBackend.startShopifyOAuth(shop.trim());
+    // Browser navigates away to Shopify here — nothing runs after this
+    // in the current page.
+  } catch (err) {
+    showToast(`Could not start Shopify install: ${err.message}`);
+  }
+}
+
 /* --------------------------------- INIT -------------------------------------- */
 
 function init() {
@@ -1427,4 +1567,43 @@ function init() {
   setInterval(() => { state.minutesSinceSync++; updateSyncPill(); }, 60000);
 }
 
-init();
+function startApp() {
+  // backend.js failed to load/execute at all (script 404'd, the Supabase
+  // CDN script didn't load, a syntax error, etc.) — window.CardlineBackend
+  // is simply never assigned in that case. No point calling into it; go
+  // straight to demo data rather than getting stuck on a dead page.
+  if (typeof window.CardlineBackend === 'undefined') {
+    init();
+    useFallbackData('backend.js did not define window.CardlineBackend');
+    return;
+  }
+
+  CardlineBackend.init()
+    .then(async (session) => {
+      init();
+      if (!session) { useFallbackData('no session after CardlineBackend.init()'); return; }
+      try {
+        const [status, cards] = await Promise.all([
+          CardlineBackend.fetchShopifyStatus(),
+          CardlineBackend.fetchInventory(),
+        ]);
+        refreshShopifyCard(status);
+        CARDS.length = 0;
+        cards.forEach((c) => CARDS.push(c));
+        renderAll();
+      } catch (err) {
+        // Signed in fine, but the backend API itself (not Supabase auth) is
+        // unreachable — e.g. the local server isn't running. Demo data
+        // beats a broken-looking dashboard.
+        useFallbackData(err.message);
+      }
+    })
+    .catch((err) => {
+      // Supabase itself failed (bad keys, network unreachable, etc.) before
+      // the login form was even usable.
+      init();
+      useFallbackData(err.message);
+    });
+}
+
+startApp();
