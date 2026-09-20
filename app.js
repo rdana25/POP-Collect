@@ -1381,6 +1381,7 @@ function bindEvents() {
   document.querySelector('#tab-sync .connection:nth-of-type(2) .btn').addEventListener('click', () => showToast('eBay API test succeeded, 42ms response.'));
   document.getElementById('shopifyConnectBtn').addEventListener('click', handleShopifyConnectClick);
   document.getElementById('shopifyOAuthBtn').addEventListener('click', handleShopifyOAuthClick);
+  document.getElementById('cardWatchSyncNowBtn').addEventListener('click', handleCardWatchSyncNowClick);
   document.querySelector('.destinations').addEventListener('click', (e) => {
     const sw = e.target.closest('.switch');
     if (!sw) return;
@@ -1457,6 +1458,7 @@ function useFallbackData(reason) {
   document.getElementById('shopifyStoreDomain').textContent = 'Demo data — backend unavailable';
   document.getElementById('shopifyConnectBtn').textContent = 'Connect store';
   document.getElementById('shopifyOAuthBtn').hidden = false;
+  document.getElementById('cardWatchSyncNowBtn').hidden = true;
   renderAll();
   showToast("Couldn't reach the backend — showing demo data instead.");
 }
@@ -1469,6 +1471,31 @@ function refreshShopifyCard(status) {
     : 'Not connected';
   document.getElementById('shopifyConnectBtn').textContent = shopifyConnected ? 'Disconnect' : 'Connect store';
   document.getElementById('shopifyOAuthBtn').hidden = shopifyConnected;
+  document.getElementById('cardWatchSyncNowBtn').hidden = !shopifyConnected;
+}
+
+async function handleCardWatchSyncNowClick() {
+  if (!backendReady()) {
+    showToast("Backend unavailable — you're viewing demo data.");
+    return;
+  }
+  const btn = document.getElementById('cardWatchSyncNowBtn');
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+  try {
+    const res = await CardlineBackend.runCardWatchSyncNow();
+    if (!res.ok) {
+      showToast(res.message || 'Pricing check failed.');
+    } else {
+      showToast(`Checked ${res.assets_checked} card${res.assets_checked === 1 ? '' : 's'} · ${res.alerted} new alert${res.alerted === 1 ? '' : 's'}`);
+      await loadRealInventory();
+    }
+  } catch (err) {
+    showToast(`Pricing check failed: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run pricing check';
+  }
 }
 
 async function loadShopifyStatus() {

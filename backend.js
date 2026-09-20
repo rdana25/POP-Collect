@@ -66,6 +66,31 @@
     const toggle = document.getElementById("loginToggleMode");
     const title = document.getElementById("loginTitle");
     const submitBtn = document.getElementById("loginSubmitBtn");
+    const googleBtn = document.getElementById("loginGoogleBtn");
+
+    // Accounts created via "Continue with Google" on the real SWOP app have
+    // no password at all — email/password sign-in always fails for them
+    // with "Invalid login credentials" regardless of what's typed. This is
+    // the other half of that login path.
+    googleBtn.addEventListener("click", async () => {
+      setLoginError("");
+      googleBtn.disabled = true;
+      try {
+        // Full-page redirect to Google, then back to this exact URL with
+        // the session in the URL fragment — supabase-js picks it up
+        // automatically on the next CardlineBackend.init() (getSession()
+        // parses it because detectSessionInUrl defaults to true), so no
+        // extra handling is needed here beyond starting the redirect.
+        const { error } = await sb.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: window.location.href.split("#")[0] },
+        });
+        if (error) throw error;
+      } catch (err) {
+        setLoginError((err && err.message) || "Google sign-in failed.");
+        googleBtn.disabled = false;
+      }
+    });
 
     toggle.addEventListener("click", () => {
       signupMode = !signupMode;
@@ -168,6 +193,12 @@
     },
     fetchAlerts() {
       return api("/card-watch/alerts");
+    },
+    // Runs the sold-comp check immediately instead of waiting for the daily
+    // cron (deploy/card_watch_refresh.sh) — auto-enables card_watch_settings
+    // with defaults on first call, so there's no separate settings step.
+    runCardWatchSyncNow() {
+      return api("/card-watch/sync-now", { method: "POST" });
     },
     fetchShopifyStatus() {
       return api("/shopify/status");
