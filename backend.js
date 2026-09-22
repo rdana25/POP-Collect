@@ -33,6 +33,28 @@
     localStorage.getItem("cardline_api_base") ||
     "http://localhost:8010/v1";
 
+  // Anti-scrape "fingerprint" header the backend's security_middleware
+  // (backend/main.py) requires on every authenticated request — NOT a real
+  // auth boundary (the Supabase JWT is), just a speed bump against raw API
+  // scrapers, and its own comment in main.py says it's expected to ship in
+  // the browser bundle since it can be extracted from there anyway. Without
+  // it every authed call gets a 403 "Missing fingerprint" — override via
+  // window.CARDLINE_APP_FINGERPRINT_SECRET the same way as the Supabase
+  // keys above if this ever needs to point at a different backend.
+  const APP_FINGERPRINT_SECRET =
+    window.CARDLINE_APP_FINGERPRINT_SECRET ||
+    "3123428fa318e80e879bccce44412db7d816de80c3ac88caf1b021c5999779b0";
+
+  async function computeFingerprint(ts) {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw", enc.encode(APP_FINGERPRINT_SECRET),
+      { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, enc.encode(ts));
+    return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
   // If the Supabase CDN script didn't load (network issue, ad blocker,
   // offline), `window.supabase` is undefined here. Bail out cleanly rather
   // than throwing an uncaught error into the console — app.js's startApp()
@@ -140,11 +162,15 @@
 
   async function api(path, options = {}) {
     if (!currentSession) throw new Error("Not signed in");
+    const ts = Math.floor(Date.now() / 1000).toString();
+    const fingerprint = await computeFingerprint(ts);
     const resp = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${currentSession.access_token}`,
+        "X-App-Fingerprint": fingerprint,
+        "X-App-Ts": ts,
         ...(options.headers || {}),
       },
     });
