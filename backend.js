@@ -33,6 +33,18 @@
     localStorage.getItem("cardline_api_base") ||
     "http://localhost:8010/v1";
 
+  // Where Supabase should send the browser back to after Google OAuth or an
+  // email-confirmation click. Defaults to this page, minus any fragment.
+  //
+  // IMPORTANT: Supabase validates this server-side against the project's
+  // "Redirect URLs" allow-list (Dashboard → Authentication → URL
+  // Configuration). Anything not on that list is silently ignored and the
+  // user is sent to the project's Site URL instead — which on this shared
+  // project is the live SWOP app. So this value alone cannot fix a wrong
+  // redirect; the URL must also be allow-listed there.
+  const RETURN_URL =
+    window.CARDLINE_RETURN_URL || window.location.href.split("#")[0];
+
   // Anti-scrape "fingerprint" header the backend's security_middleware
   // (backend/main.py) requires on every authenticated request — NOT a real
   // auth boundary (the Supabase JWT is), just a speed bump against raw API
@@ -105,7 +117,7 @@
         // extra handling is needed here beyond starting the redirect.
         const { error } = await sb.auth.signInWithOAuth({
           provider: "google",
-          options: { redirectTo: window.location.href.split("#")[0] },
+          options: { redirectTo: RETURN_URL },
         });
         if (error) throw error;
       } catch (err) {
@@ -132,7 +144,15 @@
       const password = document.getElementById("loginPassword").value;
       try {
         const { data, error } = signupMode
-          ? await sb.auth.signUp({ email, password })
+          ? await sb.auth.signUp({
+              email,
+              password,
+              // Without this, the confirmation email's link falls back to the
+              // Supabase project's Site URL — which is the live SWOP app, not
+              // this dashboard. Shared project, so we don't control that
+              // default; we can only override it per-request.
+              options: { emailRedirectTo: RETURN_URL },
+            })
           : await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
