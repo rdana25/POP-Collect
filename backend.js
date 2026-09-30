@@ -28,10 +28,15 @@
   //   <script>window.CARDLINE_SUPABASE_URL = '...'; window.CARDLINE_SUPABASE_ANON_KEY = '...';</script>
   const SUPABASE_URL = window.CARDLINE_SUPABASE_URL || "https://apeuyuaqepblgtniwlea.supabase.co";
   const SUPABASE_ANON_KEY = window.CARDLINE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwZXV5dWFxZXBibGd0bml3bGVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3OTU2NzUsImV4cCI6MjA2NzM3MTY3NX0.lhVXLBW0bnjRhnUdPcrjqzb6EqKrt9UVKk_3zc_oAVM";
+  // Defaults to the real deployed backend now that this is a live site, not
+  // a local-only prototype — override via window.CARDLINE_API_BASE (set in
+  // an inline <script> before this file loads) or
+  // localStorage.setItem('cardline_api_base', 'http://localhost:8010/v1')
+  // for local dev testing against a laptop-hosted backend instead.
   const API_BASE =
     window.CARDLINE_API_BASE ||
     localStorage.getItem("cardline_api_base") ||
-    "http://localhost:8010/v1";
+    "https://api-demo.swop.trade/v1";
 
   // Where Supabase should send the browser back to after Google OAuth or an
   // email-confirmation click. Defaults to this page, minus any fragment.
