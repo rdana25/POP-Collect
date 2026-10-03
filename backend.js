@@ -89,6 +89,18 @@
   let currentSession = null;
   let signupMode = false;
 
+  // Demo account: signs in locally (no Supabase user, no API calls) and
+  // app.js shows its mock inventory. Not a secret — it's printed on the
+  // sign-in card; it only ever unlocks the sample data.
+  const DEMO_EMAIL = "demo@popcollect.com";
+  const DEMO_PASSWORD = "popcollect";
+  const DEMO_KEY = "popcollect.demo";
+  const DEMO_SESSION = { demo: true, user: { email: DEMO_EMAIL } };
+
+  function isDemo() {
+    try { return localStorage.getItem(DEMO_KEY) === "1"; } catch (_) { return false; }
+  }
+
   function showOverlay(show) {
     document.getElementById("loginOverlay").hidden = !show;
     document.getElementById("appRoot").hidden = show;
@@ -131,32 +143,129 @@
       }
     });
 
-    toggle.addEventListener("click", () => {
-      signupMode = !signupMode;
-      title.textContent = signupMode ? "Create account" : "Sign in";
-      submitBtn.textContent = signupMode ? "Sign up" : "Sign in";
+    const sub = document.getElementById("loginSub");
+    const signupFields = document.getElementById("signupFields");
+    const businessField = document.getElementById("signupBusinessField");
+    const confirmField = document.getElementById("signupConfirmField");
+    const passwordHint = document.getElementById("signupPasswordHint");
+    const passwordInput = document.getElementById("loginPassword");
+    const typeButtons = signupFields.querySelectorAll("[data-account-type]");
+    let accountType = "individual";
+
+    function clearInvalid() {
+      form.querySelectorAll(".is-invalid").forEach((el) => el.classList.remove("is-invalid"));
+    }
+
+    function applyMode() {
+      title.textContent = signupMode ? "Create your account" : "Sign in";
+      sub.textContent = signupMode
+        ? "Register as an individual or a business to start tracking margin on your card inventory."
+        : "Sign in to your Pop Collect account to sync your Shopify inventory and eBay pricing alerts.";
+      submitBtn.textContent = signupMode ? "Create account" : "Sign in";
       toggle.textContent = signupMode
         ? "Have an account? Sign in"
         : "Need an account? Sign up";
+      signupFields.hidden = !signupMode;
+      confirmField.hidden = !signupMode;
+      passwordHint.hidden = !signupMode;
+      document.getElementById("loginDemo").hidden = signupMode;
+      passwordInput.autocomplete = signupMode ? "new-password" : "current-password";
+      clearInvalid();
       setLoginError("");
+    }
+
+    typeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        accountType = btn.dataset.accountType;
+        typeButtons.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+        businessField.hidden = accountType !== "business";
+      });
     });
+
+    toggle.addEventListener("click", () => {
+      signupMode = !signupMode;
+      applyMode();
+    });
+
+    function enterDemo() {
+      try { localStorage.setItem(DEMO_KEY, "1"); } catch (_) {}
+      currentSession = DEMO_SESSION;
+      showOverlay(false);
+      resolve(currentSession);
+    }
+    document.getElementById("loginDemoBtn").addEventListener("click", enterDemo);
+
+    // Returns the registration details, or null after flagging the first
+    // problem. Done by hand (the form is novalidate) so sign-in and sign-up
+    // share one form without the hidden sign-up fields blocking submit.
+    function readSignup(email, password) {
+      const val = (id) => document.getElementById(id).value.trim();
+      const fail = (id, msg) => {
+        const el = document.getElementById(id);
+        el.classList.add("is-invalid");
+        el.focus();
+        setLoginError(msg);
+        return null;
+      };
+      const firstName = val("signupFirstName");
+      const lastName = val("signupLastName");
+      const businessName = accountType === "business" ? val("signupBusinessName") : "";
+      const phone = val("signupPhone");
+      if (!firstName) return fail("signupFirstName", "Enter your first name.");
+      if (!lastName) return fail("signupLastName", "Enter your last name.");
+      if (accountType === "business" && !businessName)
+        return fail("signupBusinessName", "Enter your business name.");
+      const digits = phone.replace(/\D/g, "");
+      if (!/^\+?[\d\s().-]+$/.test(phone) || digits.length < 7 || digits.length > 15)
+        return fail("signupPhone", "Enter a valid phone number.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        return fail("loginEmail", "Enter a valid email address.");
+      if (password.length < 8)
+        return fail("loginPassword", "Password must be at least 8 characters.");
+      if (password !== document.getElementById("signupPasswordConfirm").value)
+        return fail("signupPasswordConfirm", "Passwords don't match.");
+      return {
+        account_type: accountType,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: `${firstName} ${lastName}`,
+        business_name: businessName || null,
+        phone,
+      };
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       setLoginError("");
-      submitBtn.disabled = true;
+      clearInvalid();
       const email = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("loginPassword").value;
+      const password = passwordInput.value;
+      let profile = null;
+      if (signupMode) {
+        profile = readSignup(email, password);
+        if (!profile) return;
+      } else if (!email || !password) {
+        setLoginError("Enter your email and password.");
+        return;
+      } else if (email.toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD) {
+        enterDemo();
+        return;
+      }
+      submitBtn.disabled = true;
       try {
         const { data, error } = signupMode
           ? await sb.auth.signUp({
               email,
               password,
-              // Without this, the confirmation email's link falls back to the
-              // Supabase project's Site URL — which is the live SWOP app, not
-              // this dashboard. Shared project, so we don't control that
-              // default; we can only override it per-request.
-              options: { emailRedirectTo: RETURN_URL },
+              options: {
+                // Without this, the confirmation email's link falls back to the
+                // Supabase project's Site URL — which is the live SWOP app, not
+                // this dashboard. Shared project, so we don't control that
+                // default; we can only override it per-request.
+                emailRedirectTo: RETURN_URL,
+                // Registration details, stored as the user's metadata.
+                data: profile,
+              },
             })
           : await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -164,13 +273,13 @@
         if (signupMode && !data.session) {
           // Email confirmation required before a session exists — bounce
           // back to sign-in rather than leaving the form in a dead state.
+          signupMode = false;
+          applyMode();
+          passwordInput.value = "";
+          document.getElementById("signupPasswordConfirm").value = "";
           setLoginError(
             "Check your email to confirm your account, then sign in.",
           );
-          signupMode = false;
-          title.textContent = "Sign in";
-          submitBtn.textContent = "Sign in";
-          toggle.textContent = "Need an account? Sign up";
           return;
         }
 
@@ -178,7 +287,9 @@
         showOverlay(false);
         resolve(currentSession);
       } catch (err) {
-        setLoginError((err && err.message) || "Sign-in failed.");
+        setLoginError(
+          (err && err.message) || (signupMode ? "Sign-up failed." : "Sign-in failed."),
+        );
       } finally {
         submitBtn.disabled = false;
       }
@@ -220,6 +331,11 @@
     // Resolves once a session exists — shows the login overlay and waits
     // for a real sign-in if there isn't one already.
     init() {
+      if (isDemo()) {
+        currentSession = DEMO_SESSION;
+        showOverlay(false);
+        return Promise.resolve(currentSession);
+      }
       return sb.auth.getSession().then(({ data }) => {
         if (data && data.session) {
           currentSession = data.session;
@@ -236,7 +352,32 @@
     },
 
     signOut() {
+      if (isDemo()) {
+        try { localStorage.removeItem(DEMO_KEY); } catch (_) {}
+        window.location.reload();
+        return;
+      }
       sb.auth.signOut().finally(() => window.location.reload());
+    },
+
+    // Permanently deletes the signed-in user. The API (DELETE /account) must
+    // remove the Supabase auth user with the service-role key and cascade
+    // their data — the browser's anon key can't delete users itself.
+    async deleteAccount() {
+      if (isDemo()) {
+        // Nothing server-side to delete: just forget everything this
+        // browser stored for the demo and go back to sign-in.
+        try {
+          Object.keys(localStorage)
+            .filter((k) => k.startsWith("popcollect.") || k.startsWith("cardline."))
+            .forEach((k) => localStorage.removeItem(k));
+        } catch (_) {}
+        window.location.reload();
+        return;
+      }
+      await api("/account", { method: "DELETE" });
+      await sb.auth.signOut().catch(() => {});
+      window.location.reload();
     },
 
     fetchInventory() {

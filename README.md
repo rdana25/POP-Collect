@@ -1,4 +1,4 @@
-# Cardline — Margin & market monitor
+# Pop Collect — Margin & market monitor
 
 An interactive, credential-free frontend prototype for the Shopify × eBay card
 margin & price alert app. Static HTML/CSS/JS, no build step, no framework.
@@ -54,6 +54,11 @@ reserved strictly for market movement.
 - Account settings: registration, profile, password, display currency.
 - Responsive to mobile (bottom tab bar), keyboard focus visible,
   `prefers-reduced-motion` respected. `/` focuses search.
+
+Categories cover trading card games (Pokémon, Magic, Yu-Gi-Oh!, One Piece,
+Lorcana, Dragon Ball, Digimon), sports cards (NBA, NFL, MLB, soccer, NHL, F1,
+wrestling/UFC) and entertainment (Star Wars, Marvel), defined in
+`CATEGORY_META` in `app.js`.
 
 All card, billing and sync data is mock data in `app.js`. No Shopify or eBay
 requests are made and there are no credentials. Card images and fonts load

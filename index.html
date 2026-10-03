@@ -7,27 +7,24 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta name="theme-color" content="#F4F5F9" />
-    <title>Cardline — Margin &amp; market monitor</title>
+    <title>Pop Collect — Margin &amp; market monitor</title>
     <meta
       name="description"
       content="Sync Shopify card inventory with live eBay sold prices, track margin in real time, and catch pricing alerts before they cost you."
     />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='2' width='20' height='28' rx='4' fill='%230E1220'/%3E%3Crect x='10' y='6' width='12' height='4' rx='1' fill='%23fff' opacity='.9'/%3E%3Cpath d='M11 22l3.5-4 2.5 2.5 4.5-5.5' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
-    />
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=19" />
+    <link rel="stylesheet" href="styles.css?v=23" />
   </head>
   <body>
     <!-- Shared SVG resources (slab sheen + card highlight) -->
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
-      <defs>
+      <defs id="sharedDefs">
         <linearGradient id="slab-shine" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stop-color="#fff" stop-opacity=".55" />
           <stop offset=".45" stop-color="#fff" stop-opacity=".08" />
@@ -54,23 +51,7 @@
           <stop offset="0" stop-color="#A2A8BC" stop-opacity=".22" />
           <stop offset="1" stop-color="#A2A8BC" stop-opacity="0" />
         </linearGradient>
-        <!-- Category tints for slab art. Muted on purpose: status colors stay reserved. -->
-        <linearGradient id="cat-pokemon" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#F2C94C" />
-          <stop offset="1" stop-color="#3B7DD8" />
-        </linearGradient>
-        <linearGradient id="cat-basketball" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#F08A4B" />
-          <stop offset="1" stop-color="#B4472B" />
-        </linearGradient>
-        <linearGradient id="cat-baseball" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#2F4A8A" />
-          <stop offset="1" stop-color="#C24A4A" />
-        </linearGradient>
-        <linearGradient id="cat-mtg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#6B4FBB" />
-          <stop offset="1" stop-color="#2C2A4A" />
-        </linearGradient>
+        <!-- Category tints for slab art (#cat-<key>) are injected here by app.js from CATEGORY_META. -->
         <!-- eBay wordmark colors, split at the letter boundaries of the official glyphs -->
         <linearGradient id="ebay-colors" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#E53238" />
@@ -82,48 +63,23 @@
           <stop offset=".712" stop-color="#86B817" />
           <stop offset="1" stop-color="#86B817" />
         </linearGradient>
-        <linearGradient id="cat-yugioh" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#8B5E34" />
-          <stop offset="1" stop-color="#3B2A1A" />
-        </linearGradient>
       </defs>
     </svg>
 
     <!-- ====================== LOGIN (real Supabase auth) ====================== -->
     <div class="login-overlay" id="loginOverlay" hidden>
       <div class="login-card">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
-            <rect
-              x="6"
-              y="2"
-              width="20"
-              height="28"
-              rx="4.5"
-              fill="currentColor"
-            />
-            <rect
-              x="10.5"
-              y="6"
-              width="11"
-              height="3.6"
-              rx="1"
-              fill="#fff"
-              opacity=".92"
-            />
-            <path
-              d="M11 22.5l3.6-4.2 2.6 2.6 4.8-5.9"
-              stroke="#fff"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </span>
+        <img
+          class="login-logo"
+          src="assets/pop-collect-logo.png"
+          alt="Pop Collect"
+          width="1027"
+          height="160"
+        />
         <h1 id="loginTitle">Sign in</h1>
-        <p class="login-sub">
-          Sign in to your SWOP account to sync your real Shopify inventory and
-          eBay pricing alerts.
+        <p class="login-sub" id="loginSub">
+          Sign in to your Pop Collect account to sync your Shopify inventory
+          and eBay pricing alerts.
         </p>
         <button class="btn btn-ghost login-google" type="button" id="loginGoogleBtn">
           <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true">
@@ -135,7 +91,52 @@
           Continue with Google
         </button>
         <div class="login-divider"><span>or</span></div>
-        <form id="loginForm">
+        <form id="loginForm" novalidate>
+          <!-- Sign-up only fields (toggled by backend.js) -->
+          <div class="signup-fields" id="signupFields" hidden>
+            <div class="field">
+              <span id="accountTypeLabel">Account type</span>
+              <div
+                class="segmented login-segmented"
+                role="group"
+                aria-labelledby="accountTypeLabel"
+              >
+                <button type="button" data-account-type="individual" aria-pressed="true">
+                  Individual
+                </button>
+                <button type="button" data-account-type="business" aria-pressed="false">
+                  Business
+                </button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label class="field"
+                >First name<input
+                  type="text"
+                  id="signupFirstName"
+                  autocomplete="given-name"
+              /></label>
+              <label class="field"
+                >Last name<input
+                  type="text"
+                  id="signupLastName"
+                  autocomplete="family-name"
+              /></label>
+            </div>
+            <label class="field" id="signupBusinessField" hidden
+              >Business name<input
+                type="text"
+                id="signupBusinessName"
+                autocomplete="organization"
+            /></label>
+            <label class="field"
+              >Phone number<input
+                type="tel"
+                id="signupPhone"
+                autocomplete="tel"
+                placeholder="+1 555 000 0000"
+            /></label>
+          </div>
           <label class="field"
             >Email<input
               type="email"
@@ -149,8 +150,17 @@
               id="loginPassword"
               required
               autocomplete="current-password"
+            /><span class="field-hint" id="signupPasswordHint" hidden
+              >At least 8 characters</span
+            ></label
+          >
+          <label class="field" id="signupConfirmField" hidden
+            >Confirm password<input
+              type="password"
+              id="signupPasswordConfirm"
+              autocomplete="new-password"
           /></label>
-          <p class="login-error" id="loginError" hidden></p>
+          <p class="login-error" id="loginError" role="alert" hidden></p>
           <button class="btn btn-ink" type="submit" id="loginSubmitBtn">
             Sign in
           </button>
@@ -158,42 +168,40 @@
         <button class="login-toggle" id="loginToggleMode" type="button">
           Need an account? Sign up
         </button>
+        <div class="login-demo" id="loginDemo">
+          <div>
+            <strong>Just looking?</strong>
+            <span
+              >Demo login: <span class="mono">demo@popcollect.com</span> ·
+              <span class="mono">popcollect</span></span
+            >
+          </div>
+          <button class="btn btn-ghost" type="button" id="loginDemoBtn">
+            Open demo
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="app" id="appRoot">
       <!-- ============================ RAIL ============================ -->
       <aside class="rail" aria-label="Sidebar">
-        <a class="brand" href="#" aria-label="Cardline home">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
-              <rect
-                x="6"
-                y="2"
-                width="20"
-                height="28"
-                rx="4.5"
-                fill="currentColor"
-              />
-              <rect
-                x="10.5"
-                y="6"
-                width="11"
-                height="3.6"
-                rx="1"
-                fill="#fff"
-                opacity=".92"
-              />
-              <path
-                d="M11 22.5l3.6-4.2 2.6 2.6 4.8-5.9"
-                stroke="#fff"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </span>
-          <span class="brand-name">Cardline</span>
+        <a class="brand" href="#" aria-label="Pop Collect home">
+          <img
+            class="brand-logo"
+            src="assets/pop-collect-logo.png"
+            alt="Pop Collect"
+            width="1027"
+            height="160"
+          />
+          <img
+            class="brand-logo-mark"
+            src="assets/pop-collect-mark.png"
+            alt=""
+            aria-hidden="true"
+            width="425"
+            height="160"
+          />
         </a>
 
         <button class="store" id="storeSwitcher" type="button">
@@ -225,8 +233,8 @@
             </svg>
           </span>
           <span class="store-text">
-            <span class="store-name">Vintage Vault Cards</span>
-            <span class="store-domain">vintage-vault.myshopify.com</span>
+            <span class="store-name" id="railStoreName">Vintage Vault Cards</span>
+            <span class="store-domain" id="railStoreDomain">vintage-vault.myshopify.com</span>
           </span>
           <svg
             class="chev"
@@ -508,13 +516,7 @@
                 aria-haspopup="true"
                 aria-expanded="false"
               >
-                <span class="avatar"
-                  ><img
-                    src="https://randomuser.me/api/portraits/men/32.jpg"
-                    alt=""
-                    width="34"
-                    height="34"
-                /></span>
+                <span class="avatar" id="avatarCircle"></span>
               </button>
               <div class="menu" id="accountDropdown" hidden>
                 <div class="menu-head">
@@ -1162,7 +1164,7 @@
                   ></span>
                   <span class="destination-text"
                     ><span class="destination-label">Email</span
-                    ><span class="destination-detail"
+                    ><span class="destination-detail" id="alertEmailDetail"
                       >riccardo@vintage-vault.com</span
                     ></span
                   >
@@ -1398,7 +1400,9 @@
                       id="acctEmail"
                       value="riccardo@vintage-vault.com"
                       required
-                  /></label>
+                  readonly
+                      title="This is the email you sign in with"
+                    /></label>
                 </div>
                 <div class="form-row">
                   <label class="field"
@@ -1480,7 +1484,39 @@
                     ><select id="currencySelect"></select
                   ></span>
                 </label>
+                <p class="surface-note" id="currencyRateNote"></p>
               </div>
+            </section>
+
+            <section class="surface danger-zone">
+              <div class="surface-head">
+                <h2>Delete account</h2>
+                <span class="surface-note">Permanent and can't be undone</span>
+              </div>
+              <form class="form" id="deleteAccountForm">
+                <p class="danger-copy">
+                  Deleting your account removes your profile, tracked cards,
+                  price alerts and store connections, and signs you out. Your
+                  Shopify store and its listings are not affected.
+                </p>
+                <label class="field field-narrow"
+                  >Type DELETE to confirm<input
+                    type="text"
+                    id="deleteConfirmInput"
+                    autocomplete="off"
+                    spellcheck="false"
+                /></label>
+                <div class="form-actions form-actions-start">
+                  <button
+                    type="submit"
+                    class="btn btn-danger"
+                    id="deleteAccountBtn"
+                    disabled
+                  >
+                    Delete my account
+                  </button>
+                </div>
+              </form>
             </section>
           </section>
         </main>
@@ -1576,7 +1612,7 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="backend.js?v=4"></script>
-    <script src="app.js?v=19"></script>
+    <script src="backend.js?v=7"></script>
+    <script src="app.js?v=24"></script>
   </body>
 </html>

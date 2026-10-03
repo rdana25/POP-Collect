@@ -1,5 +1,5 @@
 /* =========================================================================
-   Cardline — Margin & market monitor
+   Pop Collect — Margin & market monitor
    Light, borderless, frosted. Surfaces are separated by tone and soft
    shadow rather than lines. One accent (cobalt) for interaction; green and
    red are reserved for market movement only.
@@ -120,7 +120,8 @@ svg { display: block; }
 /* Collapsed rail: icons only, everything else folds away. */
 .rail-collapsed .rail { padding-left: 12px; padding-right: 12px; }
 .rail-collapsed .brand { justify-content: center; padding-left: 0; padding-right: 0; }
-.rail-collapsed .brand-name,
+.rail-collapsed .brand-logo-mark { display: block; }
+.rail-collapsed .brand-logo,
 .rail-collapsed .store-text,
 .rail-collapsed .store .chev,
 .rail-collapsed .nav-item > span,
@@ -152,8 +153,8 @@ svg { display: block; }
   gap: 10px;
   padding: 2px 8px 22px;
 }
-.brand-mark { color: var(--ink); flex-shrink: 0; }
-.brand-name { font-size: 16.5px; font-weight: 600; letter-spacing: -0.02em; }
+.brand-logo { display: block; width: auto; height: 30px; max-width: 100%; }
+.brand-logo-mark { display: none; width: auto; height: 20px; }
 
 .store {
   display: flex;
@@ -231,7 +232,7 @@ svg { display: block; }
 
 /* ------------------------------ TOPBAR -------------------------------- */
 
-.main { min-width: 0; display: flex; flex-direction: column; }
+.main { min-width: 0; display: flex; flex-direction: column; overflow-x: clip; } /* clip: the decorative ribbon bleeds past the edge on narrow screens */
 .topbar {
   position: sticky;
   top: 0;
@@ -322,6 +323,9 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   box-shadow: inset 0 0 0 1px rgba(14, 18, 32, 0.08);
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-initials { display: grid; place-items: center; width: 100%; height: 100%; background: var(--ink); color: #fff; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; }
+.field input[readonly] { color: var(--ink-3); cursor: default; }
+.field input[readonly]:focus { background: var(--surface-2); box-shadow: none; }
 .account-menu { position: relative; }
 .avatar-trigger { padding: 2px; border: 0; background: none; border-radius: 50%; cursor: pointer; transition: box-shadow .15s var(--ease); }
 .avatar-trigger:hover, .avatar-trigger[aria-expanded="true"] { box-shadow: 0 0 0 3px rgba(14, 18, 32, 0.10); }
@@ -379,6 +383,8 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
 .btn-ink.is-loading svg { animation: spin .8s linear infinite; }
 .btn-ghost { background: rgba(14, 18, 32, 0.055); color: var(--ink); }
 .btn-ghost:hover { background: rgba(14, 18, 32, 0.09); }
+.btn-danger { background: var(--down); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: var(--down-ink); }
 .btn-sm { padding: 7px 12px; font-size: 12.5px; border-radius: 9px; }
 .link-btn { padding: 0; border: 0; background: none; font-size: 12.5px; font-weight: 600; color: var(--brand-ink); cursor: pointer; }
 .link-btn:hover { text-decoration: underline; }
@@ -664,13 +670,14 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
 
 /* ------------------------------ CARD GRID ----------------------------- */
 
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 16px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr)); gap: 16px; }
+.card-grid > * { min-width: 0; }
 
 /* Poster tile: the slab fills the left edge at full height, numbers at right. */
 .card {
   position: relative;
   display: grid;
-  grid-template-columns: 132px 1fr;
+  grid-template-columns: 132px minmax(0, 1fr);
   gap: 20px;
   align-items: center;
   padding: 18px 18px 14px 18px;
@@ -1070,6 +1077,10 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
 .field input::placeholder { color: var(--ink-4); }
 .field input[type="number"] { font-variant-numeric: tabular-nums; }
 .form-actions { display: flex; justify-content: flex-end; padding-top: 2px; }
+.form-actions-start { justify-content: flex-start; }
+.danger-zone { box-shadow: inset 0 0 0 1px var(--down-soft), var(--shadow-1); }
+.danger-zone h2 { color: var(--down-ink); }
+.danger-copy { margin: 0; max-width: 60ch; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
 
 /* -------------------------------- TOAST ------------------------------- */
 
@@ -1123,7 +1134,7 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   .hero-value { font-size: 36px; }
   .chart { height: 190px; margin-right: 64px; }
   .chart-tag { font-size: 11px; padding: 2px 6px; margin-left: 10px; }
-  .connections { grid-template-columns: 1fr; }
+  .connections { grid-template-columns: minmax(0, 1fr); }
   .form-row, .form-row.three { grid-template-columns: 1fr; }
   .search-inline { width: 100%; }
   .toolbar .segmented { margin-left: auto; }
@@ -1160,9 +1171,9 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   .stat:nth-child(4) { padding-left: 16px; box-shadow: inset 1px 0 0 var(--hair); }
   .stat:nth-child(5) { padding-left: 0; box-shadow: none; }
   .hero-top { flex-direction: column; }
-  .card-grid { grid-template-columns: 1fr; }
+  .card-grid { grid-template-columns: minmax(0, 1fr); }
   /* Phone tile: slab beside the title, everything else full width beneath. */
-  .card { grid-template-columns: 84px 1fr; gap: 12px 14px; align-items: start; }
+  .card { grid-template-columns: 84px minmax(0, 1fr); gap: 12px 14px; align-items: start; }
   .card:not(.is-expanded) .card-body { display: contents; }
   .card-art { grid-row: 1; grid-column: 1; justify-content: flex-start; }
   .card-top, .card.is-editing .card-title { grid-row: 1; grid-column: 2; }
@@ -1189,6 +1200,12 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   .x-stats .stat:nth-child(even) { padding-left: 16px; box-shadow: inset 1px 0 0 var(--hair); }
 }
 
+/* Phones: the Retail / Cost axis tags don't fit beside the chart (and the
+   stat row right below repeats both figures). */
+@media (max-width: 600px) {
+  .chart-ylabel { display: none; }
+}
+
 /* -------------------------------- LOGIN -------------------------------- */
 /* Real Supabase sign-in gate (backend.js). Shown instead of .app until a
    session exists; kept visually consistent with the rest of the app
@@ -1201,14 +1218,20 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   background: var(--canvas);
 }
 .login-card {
-  width: 100%; max-width: 360px;
+  width: 100%; max-width: 420px;
+  max-height: 100%; overflow-y: auto;
   display: flex; flex-direction: column; gap: 4px;
   padding: 32px 28px 28px;
   background: var(--surface);
   border-radius: var(--r-lg);
   box-shadow: 0 24px 60px -24px rgba(14, 18, 32, 0.28);
 }
-.login-card .brand-mark { color: var(--ink); margin-bottom: 14px; }
+.login-logo { display: block; width: auto; height: 34px; align-self: flex-start; margin-bottom: 20px; }
+.signup-fields { display: flex; flex-direction: column; gap: 14px; }
+.login-segmented { display: grid; grid-template-columns: 1fr 1fr; }
+.login-segmented button { padding: 8px 11px; font-size: 13px; }
+.field-hint { font-size: 11.5px; font-weight: 400; color: var(--ink-4); }
+.field input.is-invalid { box-shadow: 0 0 0 2px var(--down); }
 .login-card h1 { margin: 0 0 6px; font-size: 20px; font-weight: 650; color: var(--ink); }
 .login-sub { margin: 0 0 18px; font-size: 13px; color: var(--ink-3); line-height: 1.5; }
 .login-card form { display: flex; flex-direction: column; gap: 14px; }
@@ -1222,6 +1245,15 @@ body.is-syncing .sync-pill svg { color: var(--brand); animation: spin 1.2s linea
   font-size: 12.5px; font-weight: 600; color: var(--brand-ink); cursor: pointer;
 }
 .login-toggle:hover { text-decoration: underline; }
+.login-demo {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 18px; padding: 12px 14px;
+  border-radius: var(--r-md); background: var(--surface-2);
+  font-size: 12px; color: var(--ink-3); line-height: 1.5;
+}
+.login-demo strong { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.login-demo .mono { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+.login-card .login-demo .btn { width: auto; margin-top: 0; flex-shrink: 0; }
 
 /* ----------------------------- CONNECTIONS ------------------------------ */
 

@@ -1,5 +1,5 @@
 /* =========================================================================
-   Cardline — Margin & market monitor
+   Pop Collect — Margin & market monitor
    Demo data + rendering. No network calls: this is a credential-free
    prototype of the Shopify x eBay card margin & price alert app.
    ========================================================================= */
@@ -24,15 +24,73 @@ const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').repl
 
 /* ------------------------------- DATA ------------------------------------ */
 
+// group drives the <optgroup> headings in the category dropdowns; c1/c2 are
+// the slab art tint (injected as #cat-<key> gradients at init).
 const CATEGORY_META = {
-  pokemon: { label: 'Pokémon TCG', grad: 'cat-pokemon', color: '#3B7DD8' },
-  mtg: { label: 'Magic: The Gathering', grad: 'cat-mtg', color: '#6B4FBB' },
-  yugioh: { label: 'Yu-Gi-Oh!', grad: 'cat-yugioh', color: '#B07A3E' },
-  // Real Shopify products whose category doesn't match a known TCG (see
-  // backend GET /v1/card-watch/inventory) fall back here rather than
-  // breaking the slab/category lookups below.
-  other: { label: 'Other cards', grad: 'cat-mtg', color: '#6F7590' },
+  pokemon: { label: 'Pokémon TCG', group: 'Trading card games', color: '#3B7DD8', c1: '#F2C94C', c2: '#3B7DD8' },
+  mtg: { label: 'Magic: The Gathering', group: 'Trading card games', color: '#6B4FBB', c1: '#6B4FBB', c2: '#2C2A4A' },
+  yugioh: { label: 'Yu-Gi-Oh!', group: 'Trading card games', color: '#B07A3E', c1: '#8B5E34', c2: '#3B2A1A' },
+  onepiece: { label: 'One Piece', group: 'Trading card games', color: '#D6453B', c1: '#D6453B', c2: '#F0B24C' },
+  lorcana: { label: 'Disney Lorcana', group: 'Trading card games', color: '#8E5BD0', c1: '#C9A14A', c2: '#4B2E83' },
+  dragonball: { label: 'Dragon Ball', group: 'Trading card games', color: '#F08A24', c1: '#F7B733', c2: '#E4572E' },
+  digimon: { label: 'Digimon', group: 'Trading card games', color: '#2FA4C7', c1: '#35B6D6', c2: '#1F4E8C' },
+  basketball: { label: 'Basketball (NBA)', group: 'Sports cards', color: '#E0703A', c1: '#F08A4B', c2: '#B4472B' },
+  football: { label: 'Football (NFL)', group: 'Sports cards', color: '#7A4B2A', c1: '#8A5A36', c2: '#2F4A2E' },
+  baseball: { label: 'Baseball (MLB)', group: 'Sports cards', color: '#2F4A8A', c1: '#2F4A8A', c2: '#C24A4A' },
+  soccer: { label: 'Soccer', group: 'Sports cards', color: '#2E9E6B', c1: '#39B27A', c2: '#17604A' },
+  hockey: { label: 'Hockey (NHL)', group: 'Sports cards', color: '#5FA8D3', c1: '#8CC4E6', c2: '#2C4F73' },
+  racing: { label: 'Racing (F1)', group: 'Sports cards', color: '#C2283A', c1: '#D7354A', c2: '#2A2D34' },
+  combat: { label: 'Wrestling & UFC', group: 'Sports cards', color: '#8A8F9C', c1: '#B9A04C', c2: '#30333B' },
+  starwars: { label: 'Star Wars', group: 'Entertainment', color: '#3A3F52', c1: '#4A6FA5', c2: '#12141C' },
+  marvel: { label: 'Marvel', group: 'Entertainment', color: '#B8323A', c1: '#C8373F', c2: '#2B3A67' },
+  // Anything that doesn't match a known line (see normalizeCategory below)
+  // falls back here rather than breaking the slab/category lookups.
+  other: { label: 'Other cards', group: 'Other', color: '#6F7590', c1: '#8A90A6', c2: '#3B4159' },
 };
+
+// Maps whatever the store/backend calls a card's category onto a
+// CATEGORY_META key. Order matters: soccer is tested before football so
+// "FIFA football" stickers don't land in NFL.
+const CATEGORY_MATCHERS = [
+  ['pokemon', /pok[eé]mon/i],
+  ['mtg', /magic[: ]+the gathering|\bmtg\b|\bmagic\b/i],
+  ['yugioh', /yu[- ]?gi[- ]?oh/i],
+  ['onepiece', /one ?piece/i],
+  ['lorcana', /lorcana/i],
+  ['dragonball', /dragon ?ball/i],
+  ['digimon', /digimon/i],
+  ['basketball', /basketball|\bw?nba\b/i],
+  ['soccer', /soccer|\bfifa\b|\buefa\b|premier league|world cup|\bmls\b/i],
+  ['football', /football|\bnfl\b/i],
+  ['baseball', /baseball|\bmlb\b/i],
+  ['hockey', /hockey|\bnhl\b/i],
+  ['racing', /formula ?(1|one)|\bf1\b|nascar|racing/i],
+  ['combat', /wrestling|\bwwe\b|\bufc\b|\baew\b|\bmma\b|boxing/i],
+  ['starwars', /star ?wars|empire strikes back|return of the jedi|mandalorian|\bjedi\b|\bsith\b/i],
+  ['marvel', /marvel/i],
+];
+
+function normalizeCategory(card) {
+  const raw = String(card.category || '').trim();
+  const key = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (key !== 'other' && CATEGORY_META[key]) return key;
+  // Trust the category first; only if that says nothing useful, infer from
+  // the rest of the listing (set line, product type, tags, title).
+  const tags = Array.isArray(card.tags) ? card.tags.join(' ') : card.tags || '';
+  for (const text of [raw, `${card.set || ''} ${card.productType || card.product_type || ''} ${tags}`, card.name || '']) {
+    const hit = CATEGORY_MATCHERS.find(([, re]) => re.test(text));
+    if (hit) return hit[0];
+  }
+  return 'other';
+}
+
+function categoryOptionsHTML(selected) {
+  const groups = {};
+  Object.entries(CATEGORY_META).forEach(([key, m]) => {
+    (groups[m.group] = groups[m.group] || []).push(`<option value="${key}" ${key === selected ? 'selected' : ''}>${m.label}</option>`);
+  });
+  return Object.entries(groups).map(([label, opts]) => `<optgroup label="${label}">${opts.join('')}</optgroup>`).join('');
+}
 
 // cls drives every colored element: up (opportunity), down (risk), flat (stable).
 const STATUS_META = {
@@ -79,6 +137,23 @@ const FALLBACK_CARDS = [
   { id: 'dmag-lob', name: 'Dark Magician', set: 'Legend of Blue Eyes 1st Ed · Yu-Gi-Oh!', category: 'yugioh', grade: 'PSA 9', sku: 'DMAG-LOB-P9', mono: 'DM', qty: 1, cost: 1450, retail: 1900, median: 1610, lastSoldPrice: 1595, sales: 4, lastSoldDate: 'Sep 2', history: [1700, 1690, 1670, 1655, 1635, 1620, 1610], image: YGO(46986414) },
   { id: 'chzb-004s', name: 'Charizard Shadowless #4', set: 'Base Set · Pokémon TCG', category: 'pokemon', grade: 'PSA 9', sku: 'CHZB-004S-P9', mono: 'CS', qty: 1, cost: 3800, retail: 4600, median: 4550, lastSoldPrice: 4560, sales: 3, lastSoldDate: 'Sep 1', history: [4150, 4230, 4320, 4400, 4470, 4520, 4550], image: POKE('base1', 4) },
   { id: 'moxr-unl', name: 'Mox Ruby', set: 'Unlimited Edition · Magic: The Gathering', category: 'mtg', grade: 'BGS 8', sku: 'MOXR-UNL-B8', mono: 'MR', qty: 1, cost: 2600, retail: 3200, median: 2500, lastSoldPrice: 2470, sales: 4, lastSoldDate: 'Sep 7', history: [2900, 2820, 2720, 2640, 2580, 2530, 2500], image: SCRY('2/1/21b7cbae-6647-4f36-b02d-5535ac88b1a6') },
+  // No public scan source for these lines, so they draw as tinted monogram slabs.
+  { id: 'luff-op01', name: 'Monkey D. Luffy Alt Art #OP01-003', set: 'Romance Dawn · One Piece Card Game', category: 'onepiece', grade: 'PSA 10', sku: 'LUFF-OP01-P10', mono: 'ML', qty: 1, cost: 420, retail: 650, median: 780, lastSoldPrice: 795, sales: 5, lastSoldDate: 'Sep 7', history: [562, 598, 635, 671, 707, 744, 780], image: null },
+  { id: 'zoro-op01', name: 'Roronoa Zoro Alt Art #OP01-025', set: 'Romance Dawn · One Piece Card Game', category: 'onepiece', grade: 'PSA 10', sku: 'ZORO-OP01-P10', mono: 'RZ', qty: 2, cost: 310, retail: 460, median: 440, lastSoldPrice: 436, sales: 4, lastSoldDate: 'Sep 5', history: [493, 484, 475, 466, 458, 449, 440], image: null },
+  { id: 'elsa-tfc', name: 'Elsa, Spirit of Winter Enchanted #207', set: 'The First Chapter · Disney Lorcana', category: 'lorcana', grade: 'PSA 10', sku: 'ELSA-TFC-P10', mono: 'EL', qty: 1, cost: 900, retail: 1250, median: 1090, lastSoldPrice: 1075, sales: 3, lastSoldDate: 'Sep 4', history: [1221, 1199, 1177, 1156, 1134, 1112, 1090], image: null },
+  { id: 'goku-bt1', name: 'Son Goku, The Awakened Power SCR', set: 'Galactic Battle · Dragon Ball Super', category: 'dragonball', grade: 'BGS 9.5', sku: 'GOKU-BT1-B95', mono: 'SG', qty: 1, cost: 260, retail: 380, median: 455, lastSoldPrice: 462, sales: 4, lastSoldDate: 'Sep 6', history: [328, 349, 370, 392, 413, 434, 455], image: null },
+  { id: 'luka-280', name: 'Luka Dončić Rookie #280', set: '2018 Panini Prizm · Basketball', category: 'basketball', grade: 'PSA 10', sku: 'LUKA-280-P10', mono: 'LD', qty: 1, cost: 380, retail: 520, median: 610, lastSoldPrice: 625, sales: 5, lastSoldDate: 'Sep 8', history: [439, 468, 496, 524, 553, 582, 610], image: null },
+  { id: 'lebr-111', name: 'LeBron James Rookie #111', set: '2003 Topps Chrome · Basketball', category: 'basketball', grade: 'PSA 9', sku: 'LEBR-111-P9', mono: 'LJ', qty: 1, cost: 3900, retail: 4800, median: 4650, lastSoldPrice: 4610, sales: 3, lastSoldDate: 'Sep 3', history: [5208, 5115, 5022, 4929, 4836, 4743, 4650], image: null },
+  { id: 'maho-269', name: 'Patrick Mahomes II Rookie #269', set: '2017 Panini Prizm · Football', category: 'football', grade: 'PSA 10', sku: 'MAHO-269-P10', mono: 'PM', qty: 1, cost: 1900, retail: 2400, median: 2150, lastSoldPrice: 2120, sales: 4, lastSoldDate: 'Sep 6', history: [2408, 2365, 2322, 2279, 2236, 2193, 2150], image: null },
+  { id: 'brad-236', name: 'Tom Brady Rookie #236', set: '2000 Bowman Chrome · Football', category: 'football', grade: 'BGS 9', sku: 'BRAD-236-B9', mono: 'TB', qty: 1, cost: 5200, retail: 6400, median: 7100, lastSoldPrice: 7250, sales: 3, lastSoldDate: 'Sep 2', history: [5112, 5443, 5775, 6106, 6437, 6769, 7100], image: null },
+  { id: 'trou-175', name: 'Mike Trout Rookie #US175', set: '2011 Topps Update · Baseball', category: 'baseball', grade: 'PSA 10', sku: 'TROU-175-P10', mono: 'MT', qty: 1, cost: 1350, retail: 1700, median: 1280, lastSoldPrice: 1260, sales: 4, lastSoldDate: 'Sep 7', history: [1434, 1408, 1383, 1357, 1331, 1306, 1280], image: null },
+  { id: 'ohta-150', name: 'Shohei Ohtani Rookie #150', set: '2018 Topps Chrome · Baseball', category: 'baseball', grade: 'PSA 10', sku: 'OHTA-150-P10', mono: 'SO', qty: 2, cost: 170, retail: 240, median: 305, lastSoldPrice: 312, sales: 5, lastSoldDate: 'Sep 8', history: [220, 234, 248, 262, 277, 291, 305], image: null },
+  { id: 'mess-012', name: 'Lionel Messi #12', set: '2014 Panini Prizm World Cup · Soccer', category: 'soccer', grade: 'PSA 10', sku: 'MESS-012-P10', mono: 'LM', qty: 1, cost: 540, retail: 720, median: 860, lastSoldPrice: 880, sales: 4, lastSoldDate: 'Sep 5', history: [619, 659, 699, 740, 780, 820, 860], image: null },
+  { id: 'mcda-201', name: 'Connor McDavid Young Guns #201', set: '2015 Upper Deck Series 1 · Hockey', category: 'hockey', grade: 'PSA 10', sku: 'MCDA-201-P10', mono: 'CM', qty: 1, cost: 980, retail: 1300, median: 1210, lastSoldPrice: 1195, sales: 4, lastSoldDate: 'Sep 4', history: [1355, 1331, 1307, 1282, 1258, 1234, 1210], image: null },
+  { id: 'hami-001', name: 'Lewis Hamilton #1', set: '2020 Topps Chrome Formula 1 · Racing', category: 'racing', grade: 'PSA 10', sku: 'HAMI-001-P10', mono: 'LH', qty: 1, cost: 290, retail: 410, median: 365, lastSoldPrice: 358, sales: 3, lastSoldDate: 'Sep 6', history: [409, 402, 394, 387, 380, 372, 365], image: null },
+  { id: 'luke-001', name: 'Luke Skywalker #1', set: '1977 Topps Star Wars Series 1 · Star Wars', category: 'starwars', grade: 'PSA 8', sku: 'LUKE-001-P8', mono: 'LS', qty: 1, cost: 620, retail: 850, median: 990, lastSoldPrice: 1010, sales: 3, lastSoldDate: 'Sep 1', history: [713, 759, 805, 852, 898, 944, 990], image: null },
+  { id: 'vade-sw', name: 'Darth Vader Refractor', set: '2019 Topps Chrome Star Wars Legacy · Star Wars', category: 'starwars', grade: 'PSA 10', sku: 'VADE-SW-P10', mono: 'DV', qty: 2, cost: 85, retail: 140, median: 128, lastSoldPrice: 126, sales: 4, lastSoldDate: 'Sep 7', history: [143, 140, 138, 136, 133, 130, 128], image: null },
+  { id: 'spid-029', name: 'Spider-Man #29', set: '1990 Impel Marvel Universe · Marvel', category: 'marvel', grade: 'PSA 10', sku: 'SPID-029-P10', mono: 'SM', qty: 1, cost: 210, retail: 320, median: 395, lastSoldPrice: 402, sales: 4, lastSoldDate: 'Sep 5', history: [284, 302, 321, 340, 358, 376, 395], image: null },
 ];
 
 // Plan slider: card capacity → monthly price. The <input type="range"> value
@@ -96,14 +171,21 @@ const PRICING_TIERS = [
 ];
 const CURRENT_PLAN_INDEX_DEFAULT = PRICING_TIERS.findIndex((t) => t.limit === 100);
 
+// All card data (cost, retail, eBay medians) and plan prices are held in USD.
+// rate is units of that currency per 1 USD: a fallback snapshot (Oct 2026)
+// that loadExchangeRates() overwrites with live rates.
+const BASE_CURRENCY = 'USD';
 const CURRENCIES = {
-  USD: { label: 'US Dollar', symbol: '$', decimals: 2 },
-  EUR: { label: 'Euro', symbol: '€', decimals: 2 },
-  GBP: { label: 'British Pound', symbol: '£', decimals: 2 },
-  JPY: { label: 'Japanese Yen', symbol: '¥', decimals: 0 },
-  CAD: { label: 'Canadian Dollar', symbol: 'CA$', decimals: 2 },
-  AUD: { label: 'Australian Dollar', symbol: 'AU$', decimals: 2 },
+  USD: { label: 'US Dollar', symbol: '$', decimals: 2, rate: 1 },
+  EUR: { label: 'Euro', symbol: '€', decimals: 2, rate: 0.8873 },
+  GBP: { label: 'British Pound', symbol: '£', decimals: 2, rate: 0.7571 },
+  JPY: { label: 'Japanese Yen', symbol: '¥', decimals: 0, rate: 157.92 },
+  CAD: { label: 'Canadian Dollar', symbol: 'CA$', decimals: 2, rate: 1.4232 },
+  AUD: { label: 'Australian Dollar', symbol: 'AU$', decimals: 2, rate: 1.4429 },
 };
+const RATES_URL = `https://open.er-api.com/v6/latest/${BASE_CURRENCY}`;
+const RATES_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+let ratesUpdatedAt = null; // Date of the live rates in use; null while on the fallback snapshot
 
 /* ------------------------------- STATE ------------------------------------ */
 
@@ -129,7 +211,7 @@ const state = {
 const activityLog = [
   { text: 'Synced 12 cards against eBay sold listings, 2 new alerts', time: '4m ago', alert: true },
   { text: 'Retail suggestion flagged for Rayquaza VMAX Alt Art #218', time: '22m ago', alert: true },
-  { text: 'Manual sync completed by Riccardo', time: '1h ago', alert: false },
+  { text: 'Manual sync completed', time: '1h ago', alert: false },
   { text: 'Margin warning cleared for Lugia V Alt Art #186', time: '3h ago', alert: false },
   { text: 'Scheduled sync, 12 cards checked, 0 errors', time: '6h ago', alert: false },
 ];
@@ -145,9 +227,14 @@ const syncLog = [
 
 const moneyStr = (n, decimals) => n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 // fmt: itemized values (card prices, cost, retail) at the currency's precision.
-const fmt = (n) => `${CURRENCIES[state.currency].symbol}${moneyStr(n, CURRENCIES[state.currency].decimals)}`;
+// Both take a USD amount and convert it to the display currency.
+const toDisplay = (usd) => usd * CURRENCIES[state.currency].rate;
+const fromDisplay = (amount) => amount / CURRENCIES[state.currency].rate;
+// Value for an editable price input: converted, at the currency's precision.
+const toInput = (usd) => +toDisplay(usd).toFixed(CURRENCIES[state.currency].decimals);
+const fmt = (n) => `${CURRENCIES[state.currency].symbol}${moneyStr(toDisplay(n), CURRENCIES[state.currency].decimals)}`;
 // fmtWhole: headline totals (portfolio value, plan prices), always whole.
-const fmtWhole = (n) => `${CURRENCIES[state.currency].symbol}${moneyStr(Math.round(n), 0)}`;
+const fmtWhole = (n) => `${CURRENCIES[state.currency].symbol}${moneyStr(Math.round(toDisplay(n)), 0)}`;
 const pct = (n) => (Math.abs(n) < 0.05 ? '0.0%' : `${n > 0 ? '+' : ''}${n.toFixed(1)}%`);
 const getStatus = (c) => (c.median > c.retail ? 'gain' : c.median <= c.cost ? 'risk' : 'stable');
 const deltaPct = (c) => ((c.median - c.retail) / c.retail) * 100;
@@ -261,7 +348,6 @@ function sparkline(card, w, h, cls) {
 // A graded card in its holder: label strip with the grade, category-tinted
 // art window with the card's monogram, sheen sweep on hover.
 function slabSVG(card) {
-  const cat = CATEGORY_META[card.category];
   const [grader = '', grade = ''] = String(card.grade).split(/\s+/);
   // Label strip mirrors a real grading label: grader at left, barcode ticks, grade at right.
   const bars = [21.5, 23, 24.2, 26, 27.6, 28.6, 30.3].map((x, i) => `<rect x="${x}" y="8.5" width="${i % 3 === 1 ? .9 : .5}" height="6" fill="#fff" opacity=".55"/>`).join('');
@@ -273,7 +359,7 @@ function slabSVG(card) {
     ${bars}
     <text x="42.8" y="14.4" text-anchor="end" font-size="7.4" font-weight="700" fill="#fff">${esc(grade)}</text>
     <svg x="7" y="20" width="38" height="53" viewBox="0 0 38 53">
-      <rect width="38" height="53" rx="2.5" fill="url(#${cat.grad})"/>
+      <rect width="38" height="53" rx="2.5" fill="url(#cat-${CATEGORY_META[card.category] ? card.category : 'other'})"/>
       ${card.image
         ? `<image href="${esc(card.image)}" width="38" height="53" preserveAspectRatio="xMidYMid slice"/>`
         : `<rect x="3" y="3" width="32" height="47" rx="2" fill="#fff" opacity=".12"/>
@@ -326,9 +412,7 @@ function showToast(msg) {
 
 // Shared inline-edit fields for both the grid tile and the list row.
 function cardEditFieldsHTML(card) {
-  const categoryOptions = Object.entries(CATEGORY_META)
-    .map(([key, m]) => `<option value="${key}" ${key === card.category ? 'selected' : ''}>${m.label}</option>`)
-    .join('');
+  const categoryOptions = categoryOptionsHTML(card.category);
   const symbol = CURRENCIES[state.currency].symbol;
   const f = (field) => `data-field="${field}" data-id="${card.id}"`;
   return `
@@ -343,8 +427,8 @@ function cardEditFieldsHTML(card) {
     </div>
     <div class="form-row three">
       <label class="field">Qty<input type="number" min="0" step="1" ${f('qty')} value="${card.qty}"></label>
-      <label class="field">Cost (${symbol})<input type="number" min="0" step="0.01" ${f('cost')} value="${card.cost}"></label>
-      <label class="field">Retail (${symbol})<input type="number" min="0" step="0.01" ${f('retail')} value="${card.retail}"></label>
+      <label class="field">Cost (${symbol})<input type="number" min="0" step="0.01" ${f('cost')} value="${toInput(card.cost)}"></label>
+      <label class="field">Retail (${symbol})<input type="number" min="0" step="0.01" ${f('retail')} value="${toInput(card.retail)}"></label>
     </div>`;
 }
 
@@ -941,9 +1025,7 @@ function renderAlerts() {
 /* ------------------------- INLINE EDIT (no modal) --------------------------- */
 
 function populateSelect(select, includeAll) {
-  const options = (includeAll ? ['<option value="all">All categories</option>'] : [])
-    .concat(Object.entries(CATEGORY_META).map(([key, meta]) => `<option value="${key}">${meta.label}</option>`));
-  select.innerHTML = options.join('');
+  select.innerHTML = (includeAll ? '<option value="all">All categories</option>' : '') + categoryOptionsHTML();
 }
 
 function setExpanded(id) {
@@ -985,7 +1067,8 @@ function handleInlineEditInput(e) {
   const field = el.dataset.field;
   if (field === 'qty' || field === 'cost' || field === 'retail') {
     const num = parseFloat(el.value);
-    if (!isNaN(num) && num >= 0) card[field] = num;
+    // Prices are typed in the display currency but stored in USD.
+    if (!isNaN(num) && num >= 0) card[field] = field === 'qty' ? num : fromDisplay(num);
   } else {
     card[field] = el.value;
   }
@@ -998,9 +1081,7 @@ const sheetTouched = new Set();
 function sheetRowHTML(card, index) {
   const status = getStatus(card);
   const meta = STATUS_META[status];
-  const categoryOptions = Object.entries(CATEGORY_META)
-    .map(([key, m]) => `<option value="${key}" ${key === card.category ? 'selected' : ''}>${m.label}</option>`)
-    .join('');
+  const categoryOptions = categoryOptionsHTML(card.category);
   const f = (field) => `data-field="${field}" data-id="${card.id}"`;
   return `
   <tr data-id="${card.id}">
@@ -1011,8 +1092,8 @@ function sheetRowHTML(card, index) {
     <td><input type="text" value="${esc(card.grade)}" ${f('grade')}></td>
     <td><input type="text" value="${esc(card.sku)}" ${f('sku')} class="mono"></td>
     <td><input type="number" min="0" step="1" value="${card.qty}" ${f('qty')}></td>
-    <td><input type="number" min="0" step="0.01" value="${card.cost}" ${f('cost')}></td>
-    <td><input type="number" min="0" step="0.01" value="${card.retail}" ${f('retail')}></td>
+    <td><input type="number" min="0" step="0.01" value="${toInput(card.cost)}" ${f('cost')}></td>
+    <td><input type="number" min="0" step="0.01" value="${toInput(card.retail)}" ${f('retail')}></td>
     <td class="readonly r sheet-median">${fmt(card.median)}</td>
     <td class="readonly r sheet-margin">${marketMarginPct(card).toFixed(0)}%</td>
     <td class="readonly sheet-status">${pillHTML(meta)}</td>
@@ -1040,7 +1121,8 @@ function handleSheetInput(e) {
   const field = el.dataset.field;
   if (field === 'qty' || field === 'cost' || field === 'retail') {
     const num = parseFloat(el.value);
-    if (!isNaN(num) && num >= 0) card[field] = num;
+    // Prices are typed in the display currency but stored in USD.
+    if (!isNaN(num) && num >= 0) card[field] = field === 'qty' ? num : fromDisplay(num);
   } else {
     card[field] = el.value;
   }
@@ -1207,6 +1289,53 @@ function handleCardRefresh(id, btnEl) {
 
 /* -------------------------------- EVENTS ------------------------------------ */
 
+function updateRateNote() {
+  const c = CURRENCIES[state.currency];
+  const when = ratesUpdatedAt
+    ? `live rate, updated ${ratesUpdatedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    : 'approximate rate — live rates unavailable';
+  document.getElementById('currencyRateNote').textContent = state.currency === BASE_CURRENCY
+    ? 'Prices are stored in US dollars, so no conversion is applied.'
+    : `1 USD = ${c.rate.toLocaleString('en-US', { maximumFractionDigits: 4 })} ${state.currency} · ${when}. Converted from US dollar prices.`;
+}
+
+function applyRates(rates, time) {
+  Object.keys(CURRENCIES).forEach((code) => {
+    if (code !== BASE_CURRENCY && rates[code] > 0) CURRENCIES[code].rate = rates[code];
+  });
+  ratesUpdatedAt = new Date(time);
+}
+
+// Live USD exchange rates, cached for 12h. On any failure the snapshot
+// rates in CURRENCIES (or a stale cache) stay in effect.
+async function loadExchangeRates() {
+  await null; // let init() finish its first render before any re-render below
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem('popcollect.rates')); } catch (_) {}
+  if (cached && cached.rates) applyRates(cached.rates, cached.time);
+  if (!cached || Date.now() - cached.fetched > RATES_MAX_AGE_MS) {
+    try {
+      const data = await (await fetch(RATES_URL)).json();
+      if (data.result !== 'success') throw new Error(data['error-type'] || 'bad response');
+      const rates = {};
+      Object.keys(CURRENCIES).forEach((code) => { rates[code] = data.rates[code]; });
+      const time = data.time_last_update_unix * 1000;
+      applyRates(rates, time);
+      try { localStorage.setItem('popcollect.rates', JSON.stringify({ rates, time, fetched: Date.now() })); } catch (_) {}
+    } catch (err) {
+      console.warn('Could not load live exchange rates:', err.message);
+    }
+  }
+  updateRateNote();
+  if (state.currency !== BASE_CURRENCY) refreshCurrencyViews();
+}
+
+function refreshCurrencyViews() {
+  renderAll();
+  renderPlanSlider();
+  updateBillingPanel();
+}
+
 function populateCurrencySelect() {
   const select = document.getElementById('currencySelect');
   select.innerHTML = Object.entries(CURRENCIES)
@@ -1338,7 +1467,11 @@ function bindEvents() {
   document.addEventListener('click', (e) => { if (!accountDropdown.hidden && !document.getElementById('accountMenu').contains(e.target)) closeAccountMenu(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !accountDropdown.hidden) closeAccountMenu(); });
   accountDropdown.addEventListener('click', (e) => { if (e.target.closest('[data-tab-link]')) closeAccountMenu(); });
-  document.getElementById('logoutBtn').addEventListener('click', () => { closeAccountMenu(); showToast('Log out is not wired up in this prototype.'); });
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    closeAccountMenu();
+    if (typeof window.CardlineBackend === 'undefined') { showToast('Log out is unavailable — the backend did not load.'); return; }
+    CardlineBackend.signOut();
+  });
 
   // vault shelf scrolling
   const shelf = document.getElementById('vaultShelf');
@@ -1388,6 +1521,7 @@ function bindEvents() {
     const isOn = sw.classList.toggle('is-on');
     sw.setAttribute('aria-checked', String(isOn));
     const label = sw.closest('.destination').querySelector('.destination-label').textContent.trim();
+    saveAlertSwitches();
     showToast(`${label} alerts turned ${isOn ? 'on' : 'off'}.`);
   });
 
@@ -1407,13 +1541,17 @@ function bindEvents() {
   document.querySelector('.current-plan .btn').addEventListener('click', () => showToast("Opening Shopify's subscription management page."));
 
   // account settings
-  document.getElementById('registrationForm').addEventListener('submit', (e) => { e.preventDefault(); showToast('Saved business registration details.'); });
+  const val = (id) => document.getElementById(id).value.trim();
+  document.getElementById('registrationForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveProfile({ businessName: val('regBusinessName'), taxId: val('regTaxId'), address: val('regAddress'), country: val('regCountry') });
+    showToast('Saved business registration details.');
+  });
   document.getElementById('accountForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = document.getElementById('acctName').value.trim();
-    const email = document.getElementById('acctEmail').value.trim();
-    if (name) document.querySelector('.account-name').textContent = name;
-    if (email) document.querySelector('.account-email').textContent = email;
+    const name = val('acctName');
+    if (!name) { showToast('Enter your full name.'); return; }
+    saveProfile({ name, role: val('acctRole') });
     showToast('Saved account details.');
   });
   document.getElementById('passwordForm').addEventListener('submit', (e) => {
@@ -1425,14 +1563,124 @@ function bindEvents() {
     e.target.reset();
     showToast('Password updated.');
   });
+  const deleteInput = document.getElementById('deleteConfirmInput');
+  const deleteBtn = document.getElementById('deleteAccountBtn');
+  deleteInput.addEventListener('input', () => { deleteBtn.disabled = deleteInput.value.trim() !== 'DELETE'; });
+  document.getElementById('deleteAccountForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (deleteInput.value.trim() !== 'DELETE') return;
+    if (typeof window.CardlineBackend === 'undefined') { showToast('Account deletion is unavailable — the backend did not load.'); return; }
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = 'Deleting…';
+    try {
+      await CardlineBackend.deleteAccount(); // reloads to the sign-in screen on success
+    } catch (err) {
+      showToast(`Couldn't delete your account: ${err.message}`);
+      deleteBtn.disabled = false;
+      deleteBtn.textContent = 'Delete my account';
+    }
+  });
   document.getElementById('currencySelect').addEventListener('change', (e) => {
     state.currency = e.target.value;
-    renderAll();
-    renderPlanSlider();
-    updateBillingPanel();
+    try { localStorage.setItem('popcollect.currency', state.currency); } catch (_) {}
+    refreshCurrencyViews();
+    updateRateNote();
     const c = CURRENCIES[state.currency];
     showToast(`Prices now shown in ${c.label} (${c.symbol}).`);
   });
+}
+
+/* ------------------------------- PROFILE ----------------------------------- */
+/* Who's signed in, shown in the header menu, the sidebar store card, the
+   email alert destination and the Settings forms. Built from the Supabase
+   session (sign-up metadata or Google profile); edits made in Settings are
+   kept in this browser per account until the backend stores profiles. */
+
+const DEMO_PROFILE = {
+  name: 'Alex Morgan', email: 'demo@popcollect.com', role: 'Store owner', avatarUrl: '',
+  businessName: 'Vintage Vault Cards LLC', taxId: 'US-84-3021557',
+  address: '221 Baker Street, Suite 4B, Chicago, IL', country: 'US',
+  storeName: 'Vintage Vault Cards', storeDomain: 'vintage-vault.myshopify.com',
+};
+let profile = { ...DEMO_PROFILE };
+let isDemoAccount = false;
+
+const profileKey = () => `popcollect.profile.${profile.email.toLowerCase()}`;
+
+function profileFromSession(session) {
+  if (!session || session.demo || !session.user) return { ...DEMO_PROFILE };
+  const u = session.user;
+  const m = u.user_metadata || {};
+  const name = m.full_name || m.name
+    || [m.first_name, m.last_name].filter(Boolean).join(' ')
+    || (u.email || '').split('@')[0];
+  return {
+    name, email: u.email || '', avatarUrl: m.avatar_url || m.picture || '',
+    role: m.account_type === 'business' ? 'Store owner' : 'Collector',
+    businessName: m.business_name || '', taxId: '', address: '', country: 'US',
+    storeName: m.business_name || name, storeDomain: 'No store connected',
+  };
+}
+
+function loadProfile(session) {
+  profile = profileFromSession(session);
+  try { Object.assign(profile, JSON.parse(localStorage.getItem(profileKey())) || {}); } catch (_) {}
+  applyProfile();
+}
+
+function saveProfile(patch) {
+  Object.assign(profile, patch);
+  const { name, role, businessName, taxId, address, country } = profile;
+  try { localStorage.setItem(profileKey(), JSON.stringify({ name, role, businessName, taxId, address, country })); } catch (_) {}
+  applyProfile();
+}
+
+function initials(name) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+}
+
+function applyProfile() {
+  const set = (id, v) => { document.getElementById(id).textContent = v; };
+  document.querySelector('.account-name').textContent = profile.name;
+  document.querySelector('.account-email').textContent = profile.email;
+  set('alertEmailDetail', profile.email);
+  set('railStoreName', profile.storeName);
+  set('railStoreDomain', profile.storeDomain);
+  const avatar = document.getElementById('avatarCircle');
+  avatar.innerHTML = profile.avatarUrl
+    ? `<img src="${esc(profile.avatarUrl)}" alt="" width="34" height="34" referrerpolicy="no-referrer">`
+    : `<span class="avatar-initials">${esc(initials(profile.name))}</span>`;
+  const val = (id, v) => { document.getElementById(id).value = v; };
+  val('acctName', profile.name);
+  val('acctEmail', profile.email);
+  val('acctRole', profile.role);
+  val('acctStore', profile.storeDomain === 'No store connected' ? '' : profile.storeDomain);
+  val('regBusinessName', profile.businessName);
+  val('regTaxId', profile.taxId);
+  val('regAddress', profile.address);
+  val('regCountry', profile.country);
+}
+
+/* ---------------------------- ALERT SWITCHES ------------------------------- */
+
+const destinationKey = (sw) => sw.closest('.destination').querySelector('.destination-label').textContent.trim().split(',')[0];
+
+function restoreAlertSwitches() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('popcollect.alertDestinations')) || {}; } catch (_) {}
+  document.querySelectorAll('.destinations .switch').forEach((sw) => {
+    const key = destinationKey(sw);
+    if (!(key in saved)) return;
+    sw.classList.toggle('is-on', saved[key]);
+    sw.setAttribute('aria-checked', String(saved[key]));
+  });
+}
+
+function saveAlertSwitches() {
+  const saved = {};
+  document.querySelectorAll('.destinations .switch').forEach((sw) => { saved[destinationKey(sw)] = sw.classList.contains('is-on'); });
+  try { localStorage.setItem('popcollect.alertDestinations', JSON.stringify(saved)); } catch (_) {}
 }
 
 /* ------------------------------ REAL BACKEND -------------------------------- */
@@ -1449,18 +1697,21 @@ function backendReady() {
   return typeof window.CardlineBackend !== 'undefined' && !usingFallbackData;
 }
 
-function useFallbackData(reason) {
+// demo: true when the user chose the demo account on purpose (backend.js),
+// as opposed to landing here because the backend couldn't be reached.
+function useFallbackData(reason, demo = false) {
   usingFallbackData = true;
-  console.warn('Cardline: backend unavailable, showing static demo data —', reason);
+  isDemoAccount = demo;
+  if (!demo) console.warn('Cardline: backend unavailable, showing static demo data —', reason);
   CARDS.length = 0;
   FALLBACK_CARDS.forEach((c) => CARDS.push(c));
   document.getElementById('shopifyStatusBadge').hidden = true;
-  document.getElementById('shopifyStoreDomain').textContent = 'Demo data — backend unavailable';
+  document.getElementById('shopifyStoreDomain').textContent = demo ? 'Demo account — sample data' : 'Demo data — backend unavailable';
   document.getElementById('shopifyConnectBtn').textContent = 'Connect store';
   document.getElementById('shopifyOAuthBtn').hidden = false;
   document.getElementById('cardWatchSyncNowBtn').hidden = true;
   renderAll();
-  showToast("Couldn't reach the backend — showing demo data instead.");
+  showToast(demo ? "You're in the demo account — all data is sample data." : "Couldn't reach the backend — showing demo data instead.");
 }
 
 function refreshShopifyCard(status) {
@@ -1472,11 +1723,13 @@ function refreshShopifyCard(status) {
   document.getElementById('shopifyConnectBtn').textContent = shopifyConnected ? 'Disconnect' : 'Connect store';
   document.getElementById('shopifyOAuthBtn').hidden = shopifyConnected;
   document.getElementById('cardWatchSyncNowBtn').hidden = !shopifyConnected;
+  profile.storeDomain = shopifyConnected ? (status.store_url || status.shop_name || 'Connected') : 'No store connected';
+  applyProfile();
 }
 
 async function handleCardWatchSyncNowClick() {
   if (!backendReady()) {
-    showToast("Backend unavailable — you're viewing demo data.");
+    showToast(isDemoAccount ? 'Syncing is off in the demo account — sign in with your own account to sync a real store.' : "Backend unavailable — you're viewing demo data.");
     return;
   }
   const btn = document.getElementById('cardWatchSyncNowBtn');
@@ -1511,7 +1764,7 @@ async function loadRealInventory() {
   try {
     const cards = await CardlineBackend.fetchInventory();
     CARDS.length = 0;
-    cards.forEach((c) => CARDS.push(c));
+    cards.forEach((c) => CARDS.push({ ...c, category: normalizeCategory(c) }));
     renderAll();
   } catch (err) {
     console.warn('Could not load inventory from backend:', err.message);
@@ -1521,7 +1774,7 @@ async function loadRealInventory() {
 
 async function handleShopifyConnectClick() {
   if (!backendReady()) {
-    showToast("Backend unavailable — you're viewing demo data. Reload once the backend is reachable to connect a real store.");
+    showToast(isDemoAccount ? 'This is the demo account — sign in with your own account to connect a Shopify store.' : "Backend unavailable — you're viewing demo data. Reload once the backend is reachable to connect a real store.");
     return;
   }
   if (shopifyConnected) {
@@ -1563,7 +1816,7 @@ async function handleShopifyConnectClick() {
 
 async function handleShopifyOAuthClick() {
   if (!backendReady()) {
-    showToast("Backend unavailable — you're viewing demo data. Reload once the backend is reachable to install the app.");
+    showToast(isDemoAccount ? 'This is the demo account — sign in with your own account to install the Shopify app.' : "Backend unavailable — you're viewing demo data. Reload once the backend is reachable to install the app.");
     return;
   }
   const shop = prompt('Shopify store domain to install on (e.g. my-store.myshopify.com):');
@@ -1580,9 +1833,20 @@ async function handleShopifyOAuthClick() {
 /* --------------------------------- INIT -------------------------------------- */
 
 function init() {
+  // Slab art tints, one gradient per category. Muted on purpose: status colors stay reserved.
+  document.getElementById('sharedDefs').insertAdjacentHTML('beforeend', Object.entries(CATEGORY_META).map(([key, m]) =>
+    `<linearGradient id="cat-${key}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${m.c1}"/><stop offset="1" stop-color="${m.c2}"/></linearGradient>`).join(''));
   renderRibbon();
   populateSelect(document.getElementById('filterCategory'), true);
+  try {
+    const saved = localStorage.getItem('popcollect.currency');
+    if (CURRENCIES[saved]) state.currency = saved;
+  } catch (_) {}
   populateCurrencySelect();
+  updateRateNote();
+  loadProfile(null);
+  restoreAlertSwitches();
+  loadExchangeRates();
   bindEvents();
   renderActivityList();
   renderSyncLogList();
@@ -1608,7 +1872,9 @@ function startApp() {
   CardlineBackend.init()
     .then(async (session) => {
       init();
+      loadProfile(session);
       if (!session) { useFallbackData('no session after CardlineBackend.init()'); return; }
+      if (session.demo) { useFallbackData('demo account', true); return; }
       try {
         const [status, cards] = await Promise.all([
           CardlineBackend.fetchShopifyStatus(),
@@ -1616,7 +1882,7 @@ function startApp() {
         ]);
         refreshShopifyCard(status);
         CARDS.length = 0;
-        cards.forEach((c) => CARDS.push(c));
+        cards.forEach((c) => CARDS.push({ ...c, category: normalizeCategory(c) }));
         renderAll();
       } catch (err) {
         // Signed in fine, but the backend API itself (not Supabase auth) is
